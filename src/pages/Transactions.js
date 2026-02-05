@@ -1,13 +1,26 @@
-import  { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { useSidebar } from "../context/SidebarContext";
 import IncomeModal from "../components/IncomeModal";
 import ExpenseModal from "../components/ExpenseModal";
-import { 
-  Plus, Minus, ChevronLeft, ChevronRight, Filter,  
-  RefreshCw, Download, Building, User, Wallet, 
-  Edit, Trash2, AlertCircle, Search, X, Menu
+import {
+  Plus,
+  Minus,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
+  RefreshCw,
+  Download,
+  Building,
+  User,
+  Wallet,
+  Edit,
+  Trash2,
+  AlertCircle,
+  Search,
+  X,
+  Menu,
 } from "lucide-react";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 
@@ -37,7 +50,7 @@ const Transactions = () => {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
-  
+
   const transactionsPerPage = 10;
   const userEmail = localStorage.getItem("userEmail");
   const BASE_URL = "https://money-manager-backend-1-8wqn.onrender.com/api";
@@ -94,157 +107,168 @@ const Transactions = () => {
     { value: "Credit Card", label: "Credit Card", icon: "💳" },
     { value: "UPI", label: "UPI", icon: "📱" },
     { value: "Cheque", label: "Cheque", icon: "📄" },
-    { value: "Other", label: "Other", icon: "🔹" }
+    { value: "Other", label: "Other", icon: "🔹" },
   ];
 
-  
+  const fetchTransactions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
 
+      // Build query parameters
+      const params = new URLSearchParams();
 
- const fetchTransactions = useCallback(async () => {
-  try {
-    setLoading(true);
-    setError("");
-    
-    // Build query parameters
-    const params = new URLSearchParams();
-    
-    if (dateRange.startDate && dateRange.endDate) {
-      params.append('startDate', dateRange.startDate);
-      params.append('endDate', dateRange.endDate);
-    }
-    
-    if (selectedType && selectedType !== "both") {
-      params.append('type', selectedType);
-    }
-    
-    if (selectedDivision !== "all") {
-      params.append('division', selectedDivision);
-    }
-    
-    if (selectedCategory !== "all") {
-      params.append('category', selectedCategory);
-    }
-    
-    if (selectedAccount !== "all") {
-      params.append('account', selectedAccount);
-    }
-    
-    if (selectedPaymentMethod !== "all") {
-      params.append('paymentMethod', selectedPaymentMethod);
-    }
-    
-    if (selectedMonth !== "all") {
-      // Create date range for selected month
-      const year = selectedYear !== "all" ? selectedYear : new Date().getFullYear();
-      const monthStart = `${year}-${selectedMonth.padStart(2, '0')}-01`;
-      const monthEnd = `${year}-${selectedMonth.padStart(2, '0')}-${new Date(year, selectedMonth, 0).getDate()}`;
-      params.append('startDate', monthStart);
-      params.append('endDate', monthEnd);
-    } else if (selectedYear !== "all") {
-      // Create date range for selected year
-      params.append('startDate', `${selectedYear}-01-01`);
-      params.append('endDate', `${selectedYear}-12-31`);
-    }
-
-    const url = `${BASE_URL}/transactions/${userEmail}${params.toString() ? '?' + params.toString() : ''}`;
-    const response = await axios.get(url);
-    
-    let transactionsData = response.data.transactions || response.data;
-    
-    // FIXED: Improved sorting by date and time (newest first)
-   // Alternative: More robust sorting that ensures proper chronological order
-const sortedTransactions = transactionsData.sort((a, b) => {
-  // Create timestamp A
-  let timestampA = new Date(a.date).getTime();
-  if (a.time) {
-    const [hours, minutes, seconds] = a.time.split(':');
-    timestampA += (parseInt(hours || 0) * 3600000) + 
-                  (parseInt(minutes || 0) * 60000) + 
-                  (parseInt(seconds || 0) * 1000);
-  }
-  
-  // Create timestamp B
-  let timestampB = new Date(b.date).getTime();
-  if (b.time) {
-    const [hours, minutes, seconds] = b.time.split(':');
-    timestampB += (parseInt(hours || 0) * 3600000) + 
-                  (parseInt(minutes || 0) * 60000) + 
-                  (parseInt(seconds || 0) * 1000);
-  }
-  
-  // If timestamps are equal, use creation time or ID for tie-breaking
-  if (timestampA === timestampB) {
-    // Try creation timestamp first
-    if (a.createdAt && b.createdAt) {
-      const createdA = new Date(a.createdAt).getTime();
-      const createdB = new Date(b.createdAt).getTime();
-      if (createdA !== createdB) {
-        return createdB - createdA; // Newer creation first
+      if (dateRange.startDate && dateRange.endDate) {
+        params.append("startDate", dateRange.startDate);
+        params.append("endDate", dateRange.endDate);
       }
-    }
-    
-    // Use ID as last resort for consistent ordering
-    if (a._id && b._id) {
-      return b._id.localeCompare(a._id);
-    }
-  }
-  
-  // Newest first
-  return timestampB - timestampA;
-});
-    
-    // Apply search filter if exists
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const filtered = sortedTransactions.filter(item => 
-        (item.source && item.source.toLowerCase().includes(searchLower)) ||
-        (item.description && item.description.toLowerCase().includes(searchLower)) ||
-        (item.notes && item.notes.toLowerCase().includes(searchLower)) ||
-        (item.category && item.category.toLowerCase().includes(searchLower))
+
+      if (selectedType && selectedType !== "both") {
+        params.append("type", selectedType);
+      }
+
+      if (selectedDivision !== "all") {
+        params.append("division", selectedDivision);
+      }
+
+      if (selectedCategory !== "all") {
+        params.append("category", selectedCategory);
+      }
+
+      if (selectedAccount !== "all") {
+        params.append("account", selectedAccount);
+      }
+
+      if (selectedPaymentMethod !== "all") {
+        params.append("paymentMethod", selectedPaymentMethod);
+      }
+
+      if (selectedMonth !== "all") {
+        // Create date range for selected month
+        const year =
+          selectedYear !== "all" ? selectedYear : new Date().getFullYear();
+        const monthStart = `${year}-${selectedMonth.padStart(2, "0")}-01`;
+        const monthEnd = `${year}-${selectedMonth.padStart(2, "0")}-${new Date(year, selectedMonth, 0).getDate()}`;
+        params.append("startDate", monthStart);
+        params.append("endDate", monthEnd);
+      } else if (selectedYear !== "all") {
+        // Create date range for selected year
+        params.append("startDate", `${selectedYear}-01-01`);
+        params.append("endDate", `${selectedYear}-12-31`);
+      }
+
+      const url = `${BASE_URL}/transactions/${userEmail}${params.toString() ? "?" + params.toString() : ""}`;
+      const response = await axios.get(url);
+
+      let transactionsData = response.data.transactions || response.data;
+
+      // FIXED: Improved sorting by date and time (newest first)
+      // Alternative: More robust sorting that ensures proper chronological order
+      const sortedTransactions = transactionsData.sort((a, b) => {
+        // Create timestamp A
+        let timestampA = new Date(a.date).getTime();
+        if (a.time) {
+          const [hours, minutes, seconds] = a.time.split(":");
+          timestampA +=
+            parseInt(hours || 0) * 3600000 +
+            parseInt(minutes || 0) * 60000 +
+            parseInt(seconds || 0) * 1000;
+        }
+
+        // Create timestamp B
+        let timestampB = new Date(b.date).getTime();
+        if (b.time) {
+          const [hours, minutes, seconds] = b.time.split(":");
+          timestampB +=
+            parseInt(hours || 0) * 3600000 +
+            parseInt(minutes || 0) * 60000 +
+            parseInt(seconds || 0) * 1000;
+        }
+
+        // If timestamps are equal, use creation time or ID for tie-breaking
+        if (timestampA === timestampB) {
+          // Try creation timestamp first
+          if (a.createdAt && b.createdAt) {
+            const createdA = new Date(a.createdAt).getTime();
+            const createdB = new Date(b.createdAt).getTime();
+            if (createdA !== createdB) {
+              return createdB - createdA; // Newer creation first
+            }
+          }
+
+          // Use ID as last resort for consistent ordering
+          if (a._id && b._id) {
+            return b._id.localeCompare(a._id);
+          }
+        }
+
+        // Newest first
+        return timestampB - timestampA;
+      });
+
+      // Apply search filter if exists
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const filtered = sortedTransactions.filter(
+          (item) =>
+            (item.source && item.source.toLowerCase().includes(searchLower)) ||
+            (item.description &&
+              item.description.toLowerCase().includes(searchLower)) ||
+            (item.notes && item.notes.toLowerCase().includes(searchLower)) ||
+            (item.category &&
+              item.category.toLowerCase().includes(searchLower)),
+        );
+        setFilteredTransactions(filtered);
+      } else {
+        setFilteredTransactions(sortedTransactions);
+      }
+
+      setTransactions(sortedTransactions);
+
+      // Debug log to check the order
+      console.log(
+        "Sorted transactions (first 5):",
+        sortedTransactions.slice(0, 5).map((t) => ({
+          date: t.date,
+          time: t.time,
+          type: t.type,
+          source: t.source,
+          createdAt: t.createdAt,
+        })),
       );
-      setFilteredTransactions(filtered);
-    } else {
-      setFilteredTransactions(sortedTransactions);
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+      setError("Failed to fetch transactions. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    
-    setTransactions(sortedTransactions);
-    
-    // Debug log to check the order
-    console.log("Sorted transactions (first 5):", sortedTransactions.slice(0, 5).map(t => ({
-      date: t.date,
-      time: t.time,
-      type: t.type,
-      source: t.source,
-      createdAt: t.createdAt
-    })));
-    
-  } catch (err) {
-    console.error("Error fetching transactions:", err);
-    setError("Failed to fetch transactions. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-}, [ userEmail,
-  dateRange.startDate,
-  dateRange.endDate,
-  searchTerm,
-  selectedAccount,
-  selectedCategory,
-  selectedDivision,
-  selectedMonth,
-  selectedPaymentMethod,
-  selectedType,
-  selectedYear]);
+  }, [
+    userEmail,
+    dateRange.startDate,
+    dateRange.endDate,
+    searchTerm,
+    selectedAccount,
+    selectedCategory,
+    selectedDivision,
+    selectedMonth,
+    selectedPaymentMethod,
+    selectedType,
+    selectedYear,
+  ]);
 
   // Fetch categories from backend
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/categories/${userEmail}?type=Both`);
+      const response = await axios.get(
+        `${BASE_URL}/categories/${userEmail}?type=Both`,
+      );
       if (response.data && response.data.length > 0) {
-        setCategories(response.data.map(cat => ({
-          value: cat.name,
-          label: cat.name
-        })));
+        setCategories(
+          response.data.map((cat) => ({
+            value: cat.name,
+            label: cat.name,
+          })),
+        );
       }
     } catch (error) {
       console.log("Could not fetch categories:", error.message);
@@ -256,10 +280,12 @@ const sortedTransactions = transactionsData.sort((a, b) => {
     try {
       const response = await axios.get(`${BASE_URL}/accounts/${userEmail}`);
       if (response.data && response.data.length > 0) {
-        setAccounts(response.data.map(acc => ({
-          value: acc.accountName,
-          label: acc.accountName
-        })));
+        setAccounts(
+          response.data.map((acc) => ({
+            value: acc.accountName,
+            label: acc.accountName,
+          })),
+        );
       }
     } catch (error) {
       console.log("Could not fetch accounts:", error.message);
@@ -271,11 +297,14 @@ const sortedTransactions = transactionsData.sort((a, b) => {
     const delaySearch = setTimeout(() => {
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
-        const filtered = transactions.filter(item => 
-          (item.source && item.source.toLowerCase().includes(searchLower)) ||
-          (item.description && item.description.toLowerCase().includes(searchLower)) ||
-          (item.notes && item.notes.toLowerCase().includes(searchLower)) ||
-          (item.category && item.category.toLowerCase().includes(searchLower))
+        const filtered = transactions.filter(
+          (item) =>
+            (item.source && item.source.toLowerCase().includes(searchLower)) ||
+            (item.description &&
+              item.description.toLowerCase().includes(searchLower)) ||
+            (item.notes && item.notes.toLowerCase().includes(searchLower)) ||
+            (item.category &&
+              item.category.toLowerCase().includes(searchLower)),
         );
         setFilteredTransactions(filtered);
         setCurrentPage(1);
@@ -314,7 +343,7 @@ const sortedTransactions = transactionsData.sort((a, b) => {
       setError("Cannot edit transaction after 12 hours of creation.");
       return;
     }
-    
+
     setEditingTransaction(transaction);
     if (transaction.type === "income") {
       setIncomeModalOpen(true);
@@ -337,11 +366,14 @@ const sortedTransactions = transactionsData.sort((a, b) => {
   // Handle actual delete
   const handleDeleteConfirm = async () => {
     if (!transactionToDelete) return;
-    
+
     try {
-      const endpoint = transactionToDelete.type === "income" ? "income" : "expense";
-      const response = await axios.delete(`${BASE_URL}/${endpoint}/${transactionToDelete._id}`);
-      
+      const endpoint =
+        transactionToDelete.type === "income" ? "income" : "expense";
+      const response = await axios.delete(
+        `${BASE_URL}/${endpoint}/${transactionToDelete._id}`,
+      );
+
       if (response.data.message) {
         setSuccess("Transaction deleted successfully!");
         await fetchTransactions();
@@ -362,8 +394,13 @@ const sortedTransactions = transactionsData.sort((a, b) => {
   // Calculate pagination
   const indexOfLastTransaction = currentPage * transactionsPerPage;
   const indexOfFirstTransaction = indexOfLastTransaction - transactionsPerPage;
-  const currentTransactions = filteredTransactions.slice(indexOfFirstTransaction, indexOfLastTransaction);
-  const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
+  const currentTransactions = filteredTransactions.slice(
+    indexOfFirstTransaction,
+    indexOfLastTransaction,
+  );
+  const totalPages = Math.ceil(
+    filteredTransactions.length / transactionsPerPage,
+  );
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
@@ -388,21 +425,32 @@ const sortedTransactions = transactionsData.sort((a, b) => {
     setDateRange({ startDate: "", endDate: "" });
     setSearchTerm("");
   };
-useEffect(() => {
-  if (!userEmail) {
-    setError("User not found. Please log in.");
-    setLoading(false);
-    return;
-  }
+  useEffect(() => {
+    if (!userEmail) {
+      setError("User not found. Please log in.");
+      setLoading(false);
+      return;
+    }
 
-  fetchTransactions();
-  fetchCategories();
-  fetchAccounts();
-}, [userEmail, fetchTransactions, fetchCategories, fetchAccounts]);
+    fetchTransactions();
+    fetchCategories();
+    fetchAccounts();
+  }, [userEmail, fetchTransactions, fetchCategories, fetchAccounts]);
   // Export data to CSV
   const exportToCSV = () => {
-    const headers = ["Type", "Date", "Time", "Source", "Category", "Division", "Account", "Payment Method", "Amount", "Notes"];
-    const csvData = filteredTransactions.map(item => [
+    const headers = [
+      "Type",
+      "Date",
+      "Time",
+      "Source",
+      "Category",
+      "Division",
+      "Account",
+      "Payment Method",
+      "Amount",
+      "Notes",
+    ];
+    const csvData = filteredTransactions.map((item) => [
       item.type,
       new Date(item.date).toLocaleDateString(),
       item.time || "",
@@ -412,19 +460,19 @@ useEffect(() => {
       item.account || "",
       item.paymentMethod || "",
       item.amount,
-      item.notes || ""
+      item.notes || "",
     ]);
 
     const csvContent = [
       headers.join(","),
-      ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
+      ...csvData.map((row) => row.map((cell) => `"${cell}"`).join(",")),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
   };
 
@@ -434,30 +482,30 @@ useEffect(() => {
       "Salary/Wages": "💼",
       "Freelance Work": "💻",
       "Business Profits": "📈",
-      "Investments": "📊",
-      "Rental Income": "🏠"
+      Investments: "📊",
+      "Rental Income": "🏠",
     };
-    
+
     const expenseIcons = {
       "Food & Dining": "🍕",
-      "Transportation": "🚗",
-      "Shopping": "🛍️",
-      "Entertainment": "🎬",
-      "Health & Medical": "🏥"
+      Transportation: "🚗",
+      Shopping: "🛍️",
+      Entertainment: "🎬",
+      "Health & Medical": "🏥",
     };
-    
+
     return incomeIcons[category] || expenseIcons[category] || "💰";
   };
 
   // Get payment method icon
   const getPaymentMethodIcon = (method) => {
     const icons = {
-      "Cash": "💵",
+      Cash: "💵",
       "Bank Transfer": "🏦",
       "Credit Card": "💳",
-      "UPI": "📱",
-      "Cheque": "📄",
-      "Other": "🔹"
+      UPI: "📱",
+      Cheque: "📄",
+      Other: "🔹",
     };
     return icons[method] || "💰";
   };
@@ -465,20 +513,21 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Sidebar />
-      
+
       {/* Main Content Area */}
-      <main className={`transition-all duration-300 pt-4 ${
-        isSidebarOpen ? "lg:pl-72" : "lg:pl-20"
-      }`}>
+      <main
+        className={`transition-all duration-300 pt-4 ${
+          isSidebarOpen ? "lg:pl-72" : "lg:pl-20"
+        }`}
+      >
         <div className="px-4 lg:px-6 transition-all duration-300 max-w-7xl mx-auto">
-          
           {/* Header with Hamburger */}
           <div className="mb-8">
             <div className="flex items-center gap-3">
               {/* Mobile Hamburger Button */}
-              
+
               <div>
-                <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-1">
+                <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 lg:mb-2 lg:text-left text-center">
                   Transaction History
                 </h1>
                 <p className="text-gray-600 hidden lg:block">
@@ -510,7 +559,10 @@ useEffect(() => {
           {/* Search Bar */}
           <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-gray-200">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Search transactions by description, category, notes..."
@@ -532,25 +584,30 @@ useEffect(() => {
           {/* Filter Section */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 mb-6 overflow-hidden">
             {/* Filters Header */}
-            <div 
-              className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+            <div
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-50 transition-colors gap-3"
               onClick={() => setShowFilters(!showFilters)}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 <Filter size={20} className="text-[#0B666A]" />
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Advanced Filters</h3>
-                  <p className="text-sm text-gray-500">Filter transactions by multiple criteria</p>
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                    Advanced Filters
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    Filter transactions by multiple criteria
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap mt-2 sm:mt-0 w-full sm:w-auto">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     resetFilters();
                     fetchTransactions();
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <RefreshCw size={16} />
                   Reset All
@@ -560,62 +617,72 @@ useEffect(() => {
                     e.stopPropagation();
                     fetchTransactions();
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm bg-[#0B666A] text-white rounded-lg hover:bg-[#0B666A]/90 transition-colors"
+                  className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-[#0B666A] text-white rounded-lg hover:bg-[#0B666A]/90 transition-colors"
                 >
                   <Filter size={16} />
                   Apply Filters
                 </button>
                 {showFilters ? (
-                  <ChevronLeft className="transform rotate-90 text-gray-500" size={20} />
+                  <ChevronLeft
+                    className="transform rotate-90 text-gray-500"
+                    size={20}
+                  />
                 ) : (
-                  <ChevronLeft className="transform -rotate-90 text-gray-500" size={20} />
+                  <ChevronLeft
+                    className="transform -rotate-90 text-gray-500"
+                    size={20}
+                  />
                 )}
               </div>
             </div>
 
             {/* Filters Content */}
             {showFilters && (
-              <div className="p-6 pt-0 border-t border-gray-200">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="p-4 sm:p-6 pt-0 border-t border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   {/* Left Column */}
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {/* Date Range */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 sm:mb-3">
                         Date Range
                       </label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <input
-                            type="date"
-                            value={dateRange.startDate}
-                            onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
-                            placeholder="Start Date"
-                          />
-                        </div>
-                        <div>
-                          <input
-                            type="date"
-                            value={dateRange.endDate}
-                            onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
-                            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
-                            placeholder="End Date"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                        <input
+                          type="date"
+                          value={dateRange.startDate}
+                          onChange={(e) =>
+                            setDateRange({
+                              ...dateRange,
+                              startDate: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                        />
+                        <input
+                          type="date"
+                          value={dateRange.endDate}
+                          onChange={(e) =>
+                            setDateRange({
+                              ...dateRange,
+                              endDate: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                        />
                       </div>
                     </div>
 
                     {/* Month & Year */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                           Month
                         </label>
                         <select
                           value={selectedMonth}
                           onChange={(e) => setSelectedMonth(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
                         >
                           {months.map((month) => (
                             <option key={month.value} value={month.value}>
@@ -625,13 +692,13 @@ useEffect(() => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                           Year
                         </label>
                         <select
                           value={selectedYear}
                           onChange={(e) => setSelectedYear(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
                         >
                           {years.map((year) => (
                             <option key={year.value} value={year.value}>
@@ -644,17 +711,17 @@ useEffect(() => {
                   </div>
 
                   {/* Right Column */}
-                  <div className="space-y-6">
-                    {/* Type and Division */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Type & Division */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                           Type
                         </label>
                         <select
                           value={selectedType}
                           onChange={(e) => setSelectedType(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
                         >
                           <option value="both">All Types</option>
                           <option value="income">Income</option>
@@ -662,13 +729,13 @@ useEffect(() => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                           Division
                         </label>
                         <select
                           value={selectedDivision}
                           onChange={(e) => setSelectedDivision(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
                         >
                           {divisions.map((division) => (
                             <option key={division.value} value={division.value}>
@@ -679,16 +746,16 @@ useEffect(() => {
                       </div>
                     </div>
 
-                    {/* Category and Account */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Category & Account */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                           Category
                         </label>
                         <select
                           value={selectedCategory}
                           onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
                         >
                           <option value="all">All Categories</option>
                           {categories.map((category) => (
@@ -699,13 +766,13 @@ useEffect(() => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                           Account
                         </label>
                         <select
                           value={selectedAccount}
                           onChange={(e) => setSelectedAccount(e.target.value)}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
                         >
                           <option value="all">All Accounts</option>
                           {accounts.map((account) => (
@@ -719,13 +786,15 @@ useEffect(() => {
 
                     {/* Payment Method */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                         Payment Method
                       </label>
                       <select
                         value={selectedPaymentMethod}
-                        onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
+                        onChange={(e) =>
+                          setSelectedPaymentMethod(e.target.value)
+                        }
+                        className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
                       >
                         {paymentMethods.map((method) => (
                           <option key={method.value} value={method.value}>
@@ -753,12 +822,14 @@ useEffect(() => {
             <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-8 border border-gray-200">
               <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">All Transactions</h3>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    All Transactions
+                  </h3>
                   <p className="text-sm text-gray-500">
                     Showing {filteredTransactions.length} transactions
                   </p>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={exportToCSV}
@@ -769,7 +840,7 @@ useEffect(() => {
                   </button>
                 </div>
               </div>
-              
+
               <div className="overflow-x-auto rounded-xl border border-gray-200">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -807,75 +878,118 @@ useEffect(() => {
                     {currentTransactions.length > 0 ? (
                       currentTransactions.map((item, index) => {
                         const canEdit = canEditTransaction(item.createdAt);
-                        
+
                         return (
-                          <tr key={item._id || index} className="hover:bg-gray-50 transition-colors">
+                          <tr
+                            key={item._id || index}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
                             <td className="px-3 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                item.type === "income" 
-                                  ? "bg-emerald-100 text-emerald-800" 
-                                  : "bg-red-100 text-red-800"
-                              }`}>
-                                {item.type?.charAt(0).toUpperCase() + item.type?.slice(1) || "Transaction"}
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  item.type === "income"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {item.type?.charAt(0).toUpperCase() +
+                                  item.type?.slice(1) || "Transaction"}
                               </span>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                               <div className="font-medium">
-                                {new Date(item.date).toLocaleDateString('en-IN', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric'
-                                })}
+                                {new Date(item.date).toLocaleDateString(
+                                  "en-IN",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  },
+                                )}
                               </div>
                               <div className="text-gray-500 text-xs">
                                 {item.time ? item.time.substring(0, 5) : "N/A"}
                               </div>
                             </td>
                             <td className="px-3 py-4 text-sm text-gray-900">
-                              <div className="font-medium truncate max-w-[150px]" title={item.source || item.description || "No description"}>
-                                {item.source || item.description || "No description"}
+                              <div
+                                className="font-medium truncate max-w-[150px]"
+                                title={
+                                  item.source ||
+                                  item.description ||
+                                  "No description"
+                                }
+                              >
+                                {item.source ||
+                                  item.description ||
+                                  "No description"}
                               </div>
                               {item.notes && (
-                                <div className="text-xs text-gray-500 truncate max-w-[150px]" title={item.notes}>
+                                <div
+                                  className="text-xs text-gray-500 truncate max-w-[150px]"
+                                  title={item.notes}
+                                >
                                   {item.notes}
                                 </div>
                               )}
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap">
                               <div className="flex items-center gap-1">
-                                <span className="text-sm">{getCategoryIcon(item.category)}</span>
+                                <span className="text-sm">
+                                  {getCategoryIcon(item.category)}
+                                </span>
                                 <span className="text-xs font-medium text-gray-700 truncate max-w-[100px]">
                                   {item.category || item.source || "N/A"}
                                 </span>
                               </div>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap">
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                item.division === "Office" 
-                                  ? "bg-purple-100 text-purple-800" 
-                                  : "bg-blue-100 text-blue-800"
-                              }`}>
-                                {item.division?.charAt(0).toUpperCase() + item.division?.slice(1) || "Personal"}
+                              <span
+                                className={`px-2 py-1 rounded text-xs ${
+                                  item.division === "Office"
+                                    ? "bg-purple-100 text-purple-800"
+                                    : "bg-blue-100 text-blue-800"
+                                }`}
+                              >
+                                {item.division?.charAt(0).toUpperCase() +
+                                  item.division?.slice(1) || "Personal"}
                               </span>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                               <div className="flex items-center gap-1">
-                                <Wallet size={14} className="text-gray-400 flex-shrink-0" />
-                                <span className="truncate max-w-[80px]">{item.account || "N/A"}</span>
+                                <Wallet
+                                  size={14}
+                                  className="text-gray-400 flex-shrink-0"
+                                />
+                                <span className="truncate max-w-[80px]">
+                                  {item.account || "N/A"}
+                                </span>
                               </div>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
                               <div className="flex items-center gap-1">
-                                <span className="flex-shrink-0">{getPaymentMethodIcon(item.paymentMethod)}</span>
-                                <span className="truncate max-w-[80px]">{item.paymentMethod || "N/A"}</span>
+                                <span className="flex-shrink-0">
+                                  {getPaymentMethodIcon(item.paymentMethod)}
+                                </span>
+                                <span className="truncate max-w-[80px]">
+                                  {item.paymentMethod || "N/A"}
+                                </span>
                               </div>
                             </td>
-                            <td className={`px-3 py-4 whitespace-nowrap text-sm font-medium ${
-                              item.type === "income" ? "text-emerald-700" : "text-red-700"
-                            }`}>
+                            <td
+                              className={`px-3 py-4 whitespace-nowrap text-sm font-medium ${
+                                item.type === "income"
+                                  ? "text-emerald-700"
+                                  : "text-red-700"
+                              }`}
+                            >
                               <div className="flex items-center gap-1">
-                                <span>{item.type === "income" ? "+" : "-"}</span>
-                                <span>₹{item.amount?.toLocaleString() || "0"}</span>
+                                <span>
+                                  {item.type === "income" ? "+" : "-"}
+                                </span>
+                                <span>
+                                  ₹{item.amount?.toLocaleString() || "0"}
+                                </span>
                               </div>
                             </td>
                             <td className="px-3 py-4 whitespace-nowrap">
@@ -888,7 +1002,11 @@ useEffect(() => {
                                       ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
                                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                                   } transition-colors`}
-                                  title={canEdit ? "Edit (within 12 hours)" : "Cannot edit after 12 hours"}
+                                  title={
+                                    canEdit
+                                      ? "Edit (within 12 hours)"
+                                      : "Cannot edit after 12 hours"
+                                  }
                                 >
                                   <Edit size={16} />
                                 </button>
@@ -900,7 +1018,11 @@ useEffect(() => {
                                       ? "bg-red-50 text-red-600 hover:bg-red-100"
                                       : "bg-gray-100 text-gray-400 cursor-not-allowed"
                                   } transition-colors`}
-                                  title={canEdit ? "Delete (within 12 hours)" : "Cannot delete after 12 hours"}
+                                  title={
+                                    canEdit
+                                      ? "Delete (within 12 hours)"
+                                      : "Cannot delete after 12 hours"
+                                  }
                                 >
                                   <Trash2 size={16} />
                                 </button>
@@ -912,9 +1034,14 @@ useEffect(() => {
                     ) : (
                       <tr>
                         <td colSpan="9" className="px-6 py-12 text-center">
-                          <div className="text-gray-400 mb-2">No transactions found</div>
+                          <div className="text-gray-400 mb-2">
+                            No transactions found
+                          </div>
                           <p className="text-gray-500 text-sm">
-                            {selectedType !== "both" || selectedMonth !== "all" || selectedYear !== "all" || searchTerm
+                            {selectedType !== "both" ||
+                            selectedMonth !== "all" ||
+                            selectedYear !== "all" ||
+                            searchTerm
                               ? "Try adjusting your filters or search"
                               : "Add your first transaction to get started"}
                           </p>
@@ -929,9 +1056,14 @@ useEffect(() => {
               {filteredTransactions.length > 0 && (
                 <div className="flex flex-col lg:flex-row items-center justify-between mt-6 pt-6 border-t border-gray-200 gap-4">
                   <div className="text-sm text-gray-500">
-                    Showing {indexOfFirstTransaction + 1} to {Math.min(indexOfLastTransaction, filteredTransactions.length)} of {filteredTransactions.length} transactions
+                    Showing {indexOfFirstTransaction + 1} to{" "}
+                    {Math.min(
+                      indexOfLastTransaction,
+                      filteredTransactions.length,
+                    )}{" "}
+                    of {filteredTransactions.length} transactions
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <button
                       onClick={handlePreviousPage}
@@ -945,34 +1077,37 @@ useEffect(() => {
                       <ChevronLeft size={16} />
                       Previous
                     </button>
-                    
+
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)}
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                              currentPage === pageNum
-                                ? "bg-[#0B666A] text-white"
-                                : "bg-gray-50 text-gray-700 hover:bg-gray-100"
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
+                      {Array.from(
+                        { length: Math.min(5, totalPages) },
+                        (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
+                                currentPage === pageNum
+                                  ? "bg-[#0B666A] text-white"
+                                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        },
+                      )}
                       {totalPages > 5 && currentPage < totalPages - 2 && (
                         <>
                           <span className="px-1 text-gray-400">...</span>
@@ -989,7 +1124,7 @@ useEffect(() => {
                         </>
                       )}
                     </div>
-                    
+
                     <button
                       onClick={handleNextPage}
                       disabled={currentPage === totalPages}
@@ -1036,7 +1171,9 @@ useEffect(() => {
             setEditingTransaction(null);
           }}
           onAddIncome={handleAddIncome}
-          editingIncome={editingTransaction?.type === "income" ? editingTransaction : null}
+          editingIncome={
+            editingTransaction?.type === "income" ? editingTransaction : null
+          }
         />
         <ExpenseModal
           isOpen={isExpenseModalOpen}
@@ -1045,9 +1182,11 @@ useEffect(() => {
             setEditingTransaction(null);
           }}
           onAddExpense={handleAddExpense}
-          editingExpense={editingTransaction?.type === "expense" ? editingTransaction : null}
+          editingExpense={
+            editingTransaction?.type === "expense" ? editingTransaction : null
+          }
         />
-        
+
         {/* Delete Confirmation Modal */}
         {showDeleteModal && transactionToDelete && (
           <DeleteConfirmationModal
@@ -1063,7 +1202,7 @@ useEffect(() => {
             transactionDetails={{
               amount: transactionToDelete.amount,
               category: transactionToDelete.category,
-              date: transactionToDelete.date
+              date: transactionToDelete.date,
             }}
           />
         )}

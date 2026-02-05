@@ -458,7 +458,7 @@ const handleConfirmDelete = async () => {
         }`}>
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2  ml-3 text-center lg:text-left">
+            <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 lg:mb-2  ml-5 text-center lg:text-left">
               Expense Dashboard
             </h1>
             <p className="text-gray-600 hidden lg:block text-center lg:text-left">
