@@ -36,7 +36,7 @@ const Income = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [incomeToDelete, setIncomeToDelete] = useState(null);
 
-  const BASE_URL = "http://localhost:5000/api";
+  const BASE_URL = "https://money-manager-backend-1-8wqn.onrender.com/api";
   const userEmail = localStorage.getItem("userEmail");
 
   const months = [

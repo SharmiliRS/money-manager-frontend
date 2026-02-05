@@ -75,7 +75,7 @@ const IncomeModal = ({ isOpen, onClose, onAddIncome, editingIncome }) => {
   const [categories, setCategories] = useState([]);
   const [accounts, setAccounts] = useState([]);
 
-  const BASE_URL = "http://localhost:5000/api";
+  const BASE_URL = "https://money-manager-backend-1-8wqn.onrender.com/api";
 
   // Populate form when editingIncome changes
   useEffect(() => {

@@ -49,7 +49,7 @@ const ExpenseModal = ({ isOpen, onClose, onAddExpense, editingExpense }) => {
 
  
 
-  const BASE_URL = "http://localhost:5000/api";
+  const BASE_URL = "https://money-manager-backend-1-8wqn.onrender.com/api";
 
 
 

@@ -40,7 +40,7 @@ const Transactions = () => {
   
   const transactionsPerPage = 10;
   const userEmail = localStorage.getItem("userEmail");
-  const BASE_URL = "http://localhost:5000/api";
+  const BASE_URL = "https://money-manager-backend-1-8wqn.onrender.com/api";
 
   // Check if mobile
   useEffect(() => {
