@@ -523,10 +523,10 @@ const Transactions = () => {
         <div className="px-4 lg:px-6 transition-all duration-300 max-w-7xl mx-auto">
           {/* Header with Hamburger */}
           <div className="mb-8">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center gap-3">
               {/* Mobile Hamburger Button */}
 
-              <div>
+              <div >
                 <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 lg:mb-2 lg:text-left text-center">
                   Transaction History
                 </h1>

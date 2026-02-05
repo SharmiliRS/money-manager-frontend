@@ -1,14 +1,21 @@
-import { useState, useEffect, useCallback  } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { 
-  Plus, Minus, TrendingUp, TrendingDown, 
-  Filter, RefreshCw, Loader2, Download,
-  X, Eye
+import {
+  Plus,
+  Minus,
+  TrendingUp,
+  TrendingDown,
+  Filter,
+  RefreshCw,
+  Loader2,
+  Download,
+  X,
+  Eye,
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import IncomeModal from "../components/IncomeModal";
 import ExpenseModal from "../components/ExpenseModal";
-import {  Line } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import "chart.js/auto";
 import { Menu } from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
@@ -31,7 +38,7 @@ const Dashboard = () => {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-  
+
   const [isIncomeModalOpen, setIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
   const [timeRange, setTimeRange] = useState("monthly");
@@ -42,9 +49,15 @@ const Dashboard = () => {
   const [periodData, setPeriodData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [categorySummary, setCategorySummary] = useState({ income: [], expense: [] });
-  const [divisionSummary, setDivisionSummary] = useState({ income: [], expense: [] });
-  
+  const [categorySummary, setCategorySummary] = useState({
+    income: [],
+    expense: [],
+  });
+  const [divisionSummary, setDivisionSummary] = useState({
+    income: [],
+    expense: [],
+  });
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("all");
@@ -57,12 +70,11 @@ const Dashboard = () => {
   const [paymentMethod, setPaymentMethod] = useState("all");
   const [transactionType, setTransactionType] = useState("both");
 
-  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [transactionsPerPage] = useState(10);
   const [totalTransactions, setTotalTransactions] = useState(0);
-  
+
   // Dropdown options
   const months = [
     { value: "all", label: "All Months" },
@@ -89,231 +101,235 @@ const Dashboard = () => {
   ];
 
   const divisions = ["Personal", "Office"];
-  const paymentMethods = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque", "Other"];
+  const paymentMethods = [
+    "Cash",
+    "Bank Transfer",
+    "Credit Card",
+    "UPI",
+    "Cheque",
+    "Other",
+  ];
   const transactionTypes = ["both", "income", "expense"];
-  
 
   const BASE_URL = "https://money-manager-backend-1-8wqn.onrender.com/api";
 
- 
-
   // Fetch dashboard summary data
- const fetchDashboardData = useCallback(async () => {
-  try {
-    setLoading(true);
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
 
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) {
-      console.error("No user email found");
-      return;
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) {
+        console.error("No user email found");
+        return;
+      }
+
+      const dashboardResponse = await axios.get(
+        `${BASE_URL}/dashboard/${userEmail}?period=${timeRange}`,
+      );
+      const dashboard = dashboardResponse.data;
+
+      setDashboardIncome(dashboard.summary.totalIncome || 0);
+      setDashboardExpense(dashboard.summary.totalExpense || 0);
+      setDashboardBalance(dashboard.summary.balance || 0);
+
+      setCategorySummary({
+        income: dashboard.categories.income || [],
+        expense: dashboard.categories.expense || [],
+      });
+
+      setDivisionSummary({
+        income: dashboard.divisions.income || [],
+        expense: dashboard.divisions.expense || [],
+      });
+
+      const periodResponse = await axios.get(
+        `${BASE_URL}/dashboard/period/${userEmail}?period=${timeRange}`,
+      );
+      setPeriodData(periodResponse.data.data || []);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error.message);
+    } finally {
+      setLoading(false);
     }
-
-    const dashboardResponse = await axios.get(
-      `${BASE_URL}/dashboard/${userEmail}?period=${timeRange}`
-    );
-    const dashboard = dashboardResponse.data;
-
-    setDashboardIncome(dashboard.summary.totalIncome || 0);
-    setDashboardExpense(dashboard.summary.totalExpense || 0);
-    setDashboardBalance(dashboard.summary.balance || 0);
-
-    setCategorySummary({
-      income: dashboard.categories.income || [],
-      expense: dashboard.categories.expense || []
-    });
-
-    setDivisionSummary({
-      income: dashboard.divisions.income || [],
-      expense: dashboard.divisions.expense || []
-    });
-
-    const periodResponse = await axios.get(
-      `${BASE_URL}/dashboard/period/${userEmail}?period=${timeRange}`
-    );
-    setPeriodData(periodResponse.data.data || []);
-
-  } catch (error) {
-    console.error("Error fetching dashboard data:", error.message);
-  } finally {
-    setLoading(false);
-  }
-}, [timeRange]);
-
+  }, [timeRange]);
 
   // Fetch recent transactions - show newest first
   const fetchRecentTransactions = useCallback(async () => {
-  try {
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) return;
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) return;
 
-    // Don't pass any sort parameters, we'll sort locally
-    const response = await axios.get(`${BASE_URL}/transactions/recent/${userEmail}?limit=${transactionsPerPage}&page=${currentPage}`);
-    
-    let transactionsData = [];
-    
-    if (response.data.recentTransactions) {
-      transactionsData = response.data.recentTransactions;
-      setTotalTransactions(response.data.total || transactionsData.length);
-    } else {
-      transactionsData = response.data || [];
-      setTotalTransactions(transactionsData.length || 0);
+      // Don't pass any sort parameters, we'll sort locally
+      const response = await axios.get(
+        `${BASE_URL}/transactions/recent/${userEmail}?limit=${transactionsPerPage}&page=${currentPage}`,
+      );
+
+      let transactionsData = [];
+
+      if (response.data.recentTransactions) {
+        transactionsData = response.data.recentTransactions;
+        setTotalTransactions(response.data.total || transactionsData.length);
+      } else {
+        transactionsData = response.data || [];
+        setTotalTransactions(transactionsData.length || 0);
+      }
+
+      // ALWAYS sort by date descending to show newest first
+      // ALWAYS sort by date descending to show newest first
+      transactionsData.sort((a, b) => {
+        const dateA = new Date(a.date || a.createdAt);
+        const dateB = new Date(b.date || b.createdAt);
+
+        // First, sort by date descending (newest first)
+        if (dateB > dateA) return 1;
+        if (dateB < dateA) return -1;
+
+        // If dates are the same, sort by creation time (if available)
+        const createdA = new Date(a.createdAt || 0);
+        const createdB = new Date(b.createdAt || 0);
+        if (createdB > createdA) return 1;
+        if (createdB < createdA) return -1;
+
+        // If creation time is same, sort by ID (if available)
+        if (a._id && b._id) {
+          return b._id.localeCompare(a._id);
+        }
+
+        return 0;
+      });
+
+      setTransactions(transactionsData);
+    } catch (error) {
+      console.error("Error fetching recent transactions:", error.message);
     }
-    
-    // ALWAYS sort by date descending to show newest first
-    // ALWAYS sort by date descending to show newest first
-transactionsData.sort((a, b) => {
-  const dateA = new Date(a.date || a.createdAt);
-  const dateB = new Date(b.date || b.createdAt);
-  
-  // First, sort by date descending (newest first)
-  if (dateB > dateA) return 1;
-  if (dateB < dateA) return -1;
-  
-  // If dates are the same, sort by creation time (if available)
-  const createdA = new Date(a.createdAt || 0);
-  const createdB = new Date(b.createdAt || 0);
-  if (createdB > createdA) return 1;
-  if (createdB < createdA) return -1;
-  
-  // If creation time is same, sort by ID (if available)
-  if (a._id && b._id) {
-    return b._id.localeCompare(a._id);
-  }
-  
-  return 0;
-});
-
-setTransactions(transactionsData);
-    
-  } catch (error) {
-    console.error("Error fetching recent transactions:", error.message);
-  }
-}, [currentPage, transactionsPerPage]);
- // Fetch all necessary data
+  }, [currentPage, transactionsPerPage]);
+  // Fetch all necessary data
   useEffect(() => {
     fetchDashboardData();
     fetchRecentTransactions();
   }, [fetchDashboardData, fetchRecentTransactions]);
   // Apply filters to get filtered transactions
-const applyFilters = async (page = 1) => {
-  try {
-    setLoading(true);
-    const userEmail = localStorage.getItem("userEmail");
-    if (!userEmail) return;
+  const applyFilters = async (page = 1) => {
+    try {
+      setLoading(true);
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) return;
 
-    const params = new URLSearchParams();
-    
-    // Add search query
-    if (searchQuery) {
-      params.append('search', searchQuery);
-    }
-    
-    // Add date range
-    if (startDate) {
-      params.append('startDate', startDate);
-    }
-    if (endDate) {
-      params.append('endDate', endDate);
-    }
-    
-    // Add month/year filters
-    if (selectedMonth !== "all") {
-      params.append('month', selectedMonth);
-    }
-    if (selectedYear !== "all") {
-      params.append('year', selectedYear);
-    }
-    
-    // Add other filters
-    if (division !== "all") {
-      params.append('division', division);
-    }
-    
-    if (category !== "all") {
-      params.append('category', category);
-    }
-    
-    if (account !== "all") {
-      params.append('account', account);
-    }
-    
-    if (paymentMethod !== "all") {
-      params.append('paymentMethod', paymentMethod);
-    }
-    
-    if (transactionType !== "both") {
-      params.append('type', transactionType);
-    }
-    
-    // REMOVE sortBy and sortOrder from params - let API return data in any order
-    // We'll always sort it locally by date descending
-    
-    // Add pagination parameters
-    params.append('page', page);
-    params.append('limit', transactionsPerPage);
+      const params = new URLSearchParams();
 
-    const response = await axios.get(`${BASE_URL}/transactions/${userEmail}?${params.toString()}`);
-    
-    let transactionsData = [];
-    
-    if (response.data.transactions) {
-      transactionsData = response.data.transactions;
-      setTotalTransactions(response.data.total || transactionsData.length);
-    } else {
-      transactionsData = response.data || [];
-      setTotalTransactions(transactionsData.length || 0);
-    }
-    
-    // ALWAYS sort by date descending to show newest first - NO MATTER WHAT
-   transactionsData.sort((a, b) => {
-  const dateA = new Date(a.date || a.createdAt);
-  const dateB = new Date(b.date || b.createdAt);
-  
-  // First, sort by date descending (newest first)
-  if (dateB > dateA) return 1;
-  if (dateB < dateA) return -1;
-  
-  // If dates are the same, sort by creation time (if available)
-  const createdA = new Date(a.createdAt || 0);
-  const createdB = new Date(b.createdAt || 0);
-  if (createdB > createdA) return 1;
-  if (createdB < createdA) return -1;
-  
-  // If creation time is same, sort by ID (if available)
-  if (a._id && b._id) {
-    return b._id.localeCompare(a._id);
-  }
-  
-  return 0;
-});
+      // Add search query
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
 
-setTransactions(transactionsData);
-    setCurrentPage(page);
-    setShowFilters(false);
-    
-  } catch (error) {
-    console.error("Error applying filters:", error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      // Add date range
+      if (startDate) {
+        params.append("startDate", startDate);
+      }
+      if (endDate) {
+        params.append("endDate", endDate);
+      }
+
+      // Add month/year filters
+      if (selectedMonth !== "all") {
+        params.append("month", selectedMonth);
+      }
+      if (selectedYear !== "all") {
+        params.append("year", selectedYear);
+      }
+
+      // Add other filters
+      if (division !== "all") {
+        params.append("division", division);
+      }
+
+      if (category !== "all") {
+        params.append("category", category);
+      }
+
+      if (account !== "all") {
+        params.append("account", account);
+      }
+
+      if (paymentMethod !== "all") {
+        params.append("paymentMethod", paymentMethod);
+      }
+
+      if (transactionType !== "both") {
+        params.append("type", transactionType);
+      }
+
+      // REMOVE sortBy and sortOrder from params - let API return data in any order
+      // We'll always sort it locally by date descending
+
+      // Add pagination parameters
+      params.append("page", page);
+      params.append("limit", transactionsPerPage);
+
+      const response = await axios.get(
+        `${BASE_URL}/transactions/${userEmail}?${params.toString()}`,
+      );
+
+      let transactionsData = [];
+
+      if (response.data.transactions) {
+        transactionsData = response.data.transactions;
+        setTotalTransactions(response.data.total || transactionsData.length);
+      } else {
+        transactionsData = response.data || [];
+        setTotalTransactions(transactionsData.length || 0);
+      }
+
+      // ALWAYS sort by date descending to show newest first - NO MATTER WHAT
+      transactionsData.sort((a, b) => {
+        const dateA = new Date(a.date || a.createdAt);
+        const dateB = new Date(b.date || b.createdAt);
+
+        // First, sort by date descending (newest first)
+        if (dateB > dateA) return 1;
+        if (dateB < dateA) return -1;
+
+        // If dates are the same, sort by creation time (if available)
+        const createdA = new Date(a.createdAt || 0);
+        const createdB = new Date(b.createdAt || 0);
+        if (createdB > createdA) return 1;
+        if (createdB < createdA) return -1;
+
+        // If creation time is same, sort by ID (if available)
+        if (a._id && b._id) {
+          return b._id.localeCompare(a._id);
+        }
+
+        return 0;
+      });
+
+      setTransactions(transactionsData);
+      setCurrentPage(page);
+      setShowFilters(false);
+    } catch (error) {
+      console.error("Error applying filters:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   const resetFilters = async () => {
-  setSearchQuery("");
-  setSelectedMonth("all");
-  setSelectedYear("all");
-  setStartDate("");
-  setEndDate("");
-  setDivision("all");
-  setCategory("all");
-  setAccount("all");
-  setPaymentMethod("all");
-  setTransactionType("both");
-  // Remove sort states since they're not used
-  setCurrentPage(1);
-  
-  await fetchRecentTransactions();
-  setShowFilters(false);
-};
+    setSearchQuery("");
+    setSelectedMonth("all");
+    setSelectedYear("all");
+    setStartDate("");
+    setEndDate("");
+    setDivision("all");
+    setCategory("all");
+    setAccount("all");
+    setPaymentMethod("all");
+    setTransactionType("both");
+    // Remove sort states since they're not used
+    setCurrentPage(1);
+
+    await fetchRecentTransactions();
+    setShowFilters(false);
+  };
 
   // Handle adding income
   const handleAddIncome = async () => {
@@ -348,8 +364,18 @@ setTransactions(transactionsData);
 
   // Export transactions to CSV
   const exportToCSV = () => {
-    const headers = ["Date", "Type", "Description", "Category", "Division", "Account", "Payment Method", "Amount", "Notes"];
-    const csvData = transactions.map(transaction => [
+    const headers = [
+      "Date",
+      "Type",
+      "Description",
+      "Category",
+      "Division",
+      "Account",
+      "Payment Method",
+      "Amount",
+      "Notes",
+    ];
+    const csvData = transactions.map((transaction) => [
       new Date(transaction.date).toLocaleDateString(),
       transaction.type,
       transaction.source || transaction.description || "",
@@ -358,19 +384,19 @@ setTransactions(transactionsData);
       transaction.account || "",
       transaction.paymentMethod || "",
       transaction.amount,
-      transaction.notes || ""
+      transaction.notes || "",
     ]);
 
     const csvContent = [
       headers.join(","),
-      ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
+      ...csvData.map((row) => row.map((cell) => `"${cell}"`).join(",")),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `transactions_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
   };
 
@@ -394,13 +420,13 @@ setTransactions(transactionsData);
     const icons = {
       "Salary/Wages": "💼",
       "Food & Dining": "🍕",
-      "Transportation": "🚗",
-      "Shopping": "🛍️",
-      "Entertainment": "🎬",
+      Transportation: "🚗",
+      Shopping: "🛍️",
+      Entertainment: "🎬",
       "Bills & Utilities": "💡",
       "Health & Medical": "🏥",
-      "Education": "📚",
-      "Other": "💰"
+      Education: "📚",
+      Other: "💰",
     };
     return icons[categoryName] || "💰";
   };
@@ -408,23 +434,23 @@ setTransactions(transactionsData);
   // Get payment method icon
   const getPaymentMethodIcon = (method) => {
     const icons = {
-      "Cash": "💵",
+      Cash: "💵",
       "Bank Transfer": "🏦",
       "Credit Card": "💳",
-      "UPI": "📱",
-      "Cheque": "📄",
-      "Other": "🔹"
+      UPI: "📱",
+      Cheque: "📄",
+      Other: "🔹",
     };
     return icons[method] || "💰";
   };
 
   // Prepare chart data
   const trendChartData = {
-    labels: periodData.map(item => item.period),
+    labels: periodData.map((item) => item.period),
     datasets: [
       {
         label: "Income",
-        data: periodData.map(item => item.income),
+        data: periodData.map((item) => item.income),
         borderColor: "#10b981",
         backgroundColor: "rgba(16, 185, 129, 0.1)",
         tension: 0.4,
@@ -432,7 +458,7 @@ setTransactions(transactionsData);
       },
       {
         label: "Expenses",
-        data: periodData.map(item => item.expense),
+        data: periodData.map((item) => item.expense),
         borderColor: "#ef4444",
         backgroundColor: "rgba(239, 68, 68, 0.1)",
         tension: 0.4,
@@ -444,19 +470,25 @@ setTransactions(transactionsData);
   // Get top income categories
   const topIncomeCategories = categorySummary.income
     .slice(0, 4)
-    .map(item => ({
+    .map((item) => ({
       category: item._id || item.category,
       amount: item.total || item.amount,
-      percentage: dashboardIncome > 0 ? ((item.total || item.amount) / dashboardIncome * 100).toFixed(1) : 0
+      percentage:
+        dashboardIncome > 0
+          ? (((item.total || item.amount) / dashboardIncome) * 100).toFixed(1)
+          : 0,
     }));
 
   // Get top expense categories
   const topExpenseCategories = categorySummary.expense
     .slice(0, 4)
-    .map(item => ({
+    .map((item) => ({
       category: item._id || item.category,
       amount: item.total || item.amount,
-      percentage: dashboardExpense > 0 ? ((item.total || item.amount) / dashboardExpense * 100).toFixed(1) : 0
+      percentage:
+        dashboardExpense > 0
+          ? (((item.total || item.amount) / dashboardExpense) * 100).toFixed(1)
+          : 0,
     }));
 
   // Pagination logic
@@ -471,7 +503,7 @@ setTransactions(transactionsData);
   // Render pagination buttons
   const renderPaginationButtons = () => {
     const buttons = [];
-    
+
     // Previous button
     buttons.push(
       <button
@@ -480,14 +512,14 @@ setTransactions(transactionsData);
         disabled={currentPage === 1}
         className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
           currentPage === 1
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
         }`}
       >
         Previous
-      </button>
+      </button>,
     );
-    
+
     // Page numbers
     if (totalPages <= 5) {
       // Show all pages if 5 or less
@@ -498,12 +530,12 @@ setTransactions(transactionsData);
             onClick={() => handlePageChange(i)}
             className={`w-8 h-8 rounded-lg text-sm font-medium ${
               currentPage === i
-                ? 'bg-[#0B666A] text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? "bg-[#0B666A] text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             {i}
-          </button>
+          </button>,
         );
       }
     } else {
@@ -514,25 +546,27 @@ setTransactions(transactionsData);
           onClick={() => handlePageChange(1)}
           className={`w-8 h-8 rounded-lg text-sm font-medium ${
             currentPage === 1
-              ? 'bg-[#0B666A] text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? "bg-[#0B666A] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
           1
-        </button>
+        </button>,
       );
-      
+
       // Show ellipsis if needed
       if (currentPage > 3) {
         buttons.push(
-          <span key="ellipsis1" className="px-1 text-gray-500">...</span>
+          <span key="ellipsis1" className="px-1 text-gray-500">
+            ...
+          </span>,
         );
       }
-      
+
       // Show pages around current page
       let startPage = Math.max(2, currentPage - 1);
       let endPage = Math.min(totalPages - 1, currentPage + 1);
-      
+
       for (let i = startPage; i <= endPage; i++) {
         if (i !== 1 && i !== totalPages) {
           buttons.push(
@@ -541,23 +575,25 @@ setTransactions(transactionsData);
               onClick={() => handlePageChange(i)}
               className={`w-8 h-8 rounded-lg text-sm font-medium ${
                 currentPage === i
-                  ? 'bg-[#0B666A] text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? "bg-[#0B666A] text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               {i}
-            </button>
+            </button>,
           );
         }
       }
-      
+
       // Show ellipsis if needed
       if (currentPage < totalPages - 2) {
         buttons.push(
-          <span key="ellipsis2" className="px-1 text-gray-500">...</span>
+          <span key="ellipsis2" className="px-1 text-gray-500">
+            ...
+          </span>,
         );
       }
-      
+
       // Show last page
       buttons.push(
         <button
@@ -565,15 +601,15 @@ setTransactions(transactionsData);
           onClick={() => handlePageChange(totalPages)}
           className={`w-8 h-8 rounded-lg text-sm font-medium ${
             currentPage === totalPages
-              ? 'bg-[#0B666A] text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? "bg-[#0B666A] text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
           {totalPages}
-        </button>
+        </button>,
       );
     }
-    
+
     // Next button
     buttons.push(
       <button
@@ -582,53 +618,50 @@ setTransactions(transactionsData);
         disabled={currentPage === totalPages}
         className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
           currentPage === totalPages
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
         }`}
       >
         Next
-      </button>
+      </button>,
     );
-    
+
     return buttons;
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Sidebar />
-      
+
       {/* Main Content Area */}
-      <main className={`transition-all duration-300 pt-4 ${
-        isSidebarOpen ? "lg:pl-72 lg:pr-8" : "lg:pl-20 lg:pr-8"
-      }`}>
-        <div className={`px-4 lg:px-6 transition-all duration-300 ${
-          isSidebarOpen ? "lg:max-w-7xl mx-auto" : "lg:max-w-8xl mx-auto"
-        }`}>
-          
+      <main
+        className={`transition-all duration-300 pt-4 ${
+          isSidebarOpen ? "lg:pl-72 lg:pr-8" : "lg:pl-20 lg:pr-8"
+        }`}
+      >
+        <div
+          className={`px-4 lg:px-6 transition-all duration-300 ${
+            isSidebarOpen ? "lg:max-w-7xl mx-auto" : "lg:max-w-8xl mx-auto"
+          }`}
+        >
           {/* Header with Hamburger */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              {/* Left side with hamburger and title */}
-              <div className="flex items-center gap-3">
-                
-                
-                <div>
-                  <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 text-center lg:text-left">
-                    Dashboard
-                  </h1>
-                  <p className="text-gray-600 hidden lg:block">
-                    Welcome back! Here's your financial overview
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="mb-8 flex flex-col items-center text-center">
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
+              Dashboard
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Welcome back! Here's your financial overview
+            </p>
           </div>
 
           {/* Stats Cards */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 animate-pulse">
+                <div
+                  key={i}
+                  className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200 animate-pulse"
+                >
                   <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
                   <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
                   <div className="h-4 bg-gray-200 rounded w-1/2"></div>
@@ -640,7 +673,9 @@ setTransactions(transactionsData);
               {/* Total Income Card */}
               <div className="bg-gradient-to-br from-emerald-50 to-white rounded-2xl p-6 shadow-lg border border-emerald-100">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Total Income</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Total Income
+                  </h3>
                   <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
                     <TrendingUp size={24} className="text-emerald-600" />
                   </div>
@@ -649,14 +684,17 @@ setTransactions(transactionsData);
                   ₹{dashboardIncome.toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)} earnings
+                  {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)}{" "}
+                  earnings
                 </p>
               </div>
 
               {/* Total Expense Card */}
               <div className="bg-gradient-to-br from-red-50 to-white rounded-2xl p-6 shadow-lg border border-red-100">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Total Expenses</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Total Expenses
+                  </h3>
                   <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                     <TrendingDown size={24} className="text-red-600" />
                   </div>
@@ -665,25 +703,30 @@ setTransactions(transactionsData);
                   ₹{dashboardExpense.toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)} spending
+                  {timeRange.charAt(0).toUpperCase() + timeRange.slice(1)}{" "}
+                  spending
                 </p>
               </div>
 
               {/* Net Balance Card */}
               <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 shadow-lg border border-blue-100">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Net Balance</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Net Balance
+                  </h3>
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                     <TrendingUp size={24} className="text-blue-600" />
                   </div>
                 </div>
-                <p className={`text-3xl lg:text-4xl font-bold mb-2 ${
-                  dashboardBalance >= 0 ? 'text-blue-700' : 'text-red-600'
-                }`}>
+                <p
+                  className={`text-3xl lg:text-4xl font-bold mb-2 ${
+                    dashboardBalance >= 0 ? "text-blue-700" : "text-red-600"
+                  }`}
+                >
                   ₹{dashboardBalance.toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {dashboardBalance >= 0 ? 'Profit' : 'Loss'}
+                  {dashboardBalance >= 0 ? "Profit" : "Loss"}
                 </p>
               </div>
             </div>
@@ -692,14 +735,14 @@ setTransactions(transactionsData);
           {/* Time Range Selector */}
           <div className="flex justify-center mb-8">
             <div className="bg-white rounded-xl p-1 shadow border border-gray-200 inline-flex">
-              {['weekly', 'monthly', 'yearly'].map((range) => (
+              {["weekly", "monthly", "yearly"].map((range) => (
                 <button
                   key={range}
                   onClick={() => setTimeRange(range)}
                   className={`px-6 py-2 rounded-lg font-medium capitalize transition-all ${
                     timeRange === range
-                      ? 'bg-[#0B666A] text-white shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      ? "bg-[#0B666A] text-white shadow-sm"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                   }`}
                 >
                   {range}
@@ -737,7 +780,7 @@ setTransactions(transactionsData);
                     maintainAspectRatio: false,
                     responsive: true,
                     interaction: {
-                      mode: 'index',
+                      mode: "index",
                       intersect: false,
                     },
                     plugins: {
@@ -745,21 +788,22 @@ setTransactions(transactionsData);
                         display: false,
                       },
                       tooltip: {
-                        mode: 'index',
+                        mode: "index",
                         intersect: false,
                         callbacks: {
-                          label: (context) => `${context.dataset.label}: ₹${context.parsed.y.toLocaleString()}`
-                        }
-                      }
+                          label: (context) =>
+                            `${context.dataset.label}: ₹${context.parsed.y.toLocaleString()}`,
+                        },
+                      },
                     },
                     scales: {
                       y: {
                         beginAtZero: true,
                         ticks: {
-                          callback: (value) => `₹${value.toLocaleString()}`
-                        }
-                      }
-                    }
+                          callback: (value) => `₹${value.toLocaleString()}`,
+                        },
+                      },
+                    },
                   }}
                 />
               </div>
@@ -775,21 +819,26 @@ setTransactions(transactionsData);
             <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center lg:text-left">
               Category Insights
             </h2>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Income Categories */}
               <div className="bg-gradient-to-br from-emerald-50 to-white rounded-2xl p-6 shadow-lg border border-emerald-100">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Top Income Sources</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Top Income Sources
+                  </h3>
                   <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
                     <TrendingUp size={20} className="text-emerald-600" />
                   </div>
                 </div>
-                
+
                 {loading ? (
                   <div className="space-y-4">
                     {[...Array(4)].map((_, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-white rounded-xl border border-emerald-50 animate-pulse">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 bg-white rounded-xl border border-emerald-50 animate-pulse"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-gray-200"></div>
                           <div>
@@ -804,25 +853,37 @@ setTransactions(transactionsData);
                 ) : topIncomeCategories.length > 0 ? (
                   <div className="space-y-4">
                     {topIncomeCategories.map((item, index) => (
-                      <div key={item.category} className="flex items-center justify-between p-3 bg-white rounded-xl border border-emerald-50 hover:shadow-sm transition-shadow">
+                      <div
+                        key={item.category}
+                        className="flex items-center justify-between p-3 bg-white rounded-xl border border-emerald-50 hover:shadow-sm transition-shadow"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            index === 0 ? 'bg-emerald-100 text-emerald-700' :
-                            index === 1 ? 'bg-blue-100 text-blue-700' :
-                            index === 2 ? 'bg-purple-100 text-purple-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              index === 0
+                                ? "bg-emerald-100 text-emerald-700"
+                                : index === 1
+                                  ? "bg-blue-100 text-blue-700"
+                                  : index === 2
+                                    ? "bg-purple-100 text-purple-700"
+                                    : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
                             <span className="font-bold">{index + 1}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{item.category}</p>
+                            <p className="font-medium text-gray-900">
+                              {item.category}
+                            </p>
                             <p className="text-xs text-gray-500">
                               {item.percentage}% of total income
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-emerald-700">₹{item.amount.toLocaleString()}</p>
+                          <p className="font-bold text-emerald-700">
+                            ₹{item.amount.toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -837,16 +898,21 @@ setTransactions(transactionsData);
               {/* Top Expense Categories */}
               <div className="bg-gradient-to-br from-red-50 to-white rounded-2xl p-6 shadow-lg border border-red-100">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Top Expense Categories</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Top Expense Categories
+                  </h3>
                   <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
                     <TrendingDown size={20} className="text-red-600" />
                   </div>
                 </div>
-                
+
                 {loading ? (
                   <div className="space-y-4">
                     {[...Array(4)].map((_, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 bg-white rounded-xl border border-red-50 animate-pulse">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-3 bg-white rounded-xl border border-red-50 animate-pulse"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-gray-200"></div>
                           <div>
@@ -861,25 +927,37 @@ setTransactions(transactionsData);
                 ) : topExpenseCategories.length > 0 ? (
                   <div className="space-y-4">
                     {topExpenseCategories.map((item, index) => (
-                      <div key={item.category} className="flex items-center justify-between p-3 bg-white rounded-xl border border-red-50 hover:shadow-sm transition-shadow">
+                      <div
+                        key={item.category}
+                        className="flex items-center justify-between p-3 bg-white rounded-xl border border-red-50 hover:shadow-sm transition-shadow"
+                      >
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            index === 0 ? 'bg-red-100 text-red-700' :
-                            index === 1 ? 'bg-orange-100 text-orange-700' :
-                            index === 2 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              index === 0
+                                ? "bg-red-100 text-red-700"
+                                : index === 1
+                                  ? "bg-orange-100 text-orange-700"
+                                  : index === 2
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
                             <span className="font-bold">{index + 1}</span>
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{item.category}</p>
+                            <p className="font-medium text-gray-900">
+                              {item.category}
+                            </p>
                             <p className="text-xs text-gray-500">
                               {item.percentage}% of total expenses
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-red-700">₹{item.amount.toLocaleString()}</p>
+                          <p className="font-bold text-red-700">
+                            ₹{item.amount.toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -895,8 +973,10 @@ setTransactions(transactionsData);
 
           {/* Division Breakdown */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Division Breakdown</h3>
-            
+            <h3 className="text-xl font-bold text-gray-900 mb-6">
+              Division Breakdown
+            </h3>
+
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[...Array(2)].map((_, i) => (
@@ -910,35 +990,53 @@ setTransactions(transactionsData);
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {divisionSummary.income.map((divisionItem) => (
-                  <div key={`inc-${divisionItem._id}`} className="bg-gradient-to-r from-emerald-50 to-white p-6 rounded-2xl border border-emerald-200 shadow-sm">
+                  <div
+                    key={`inc-${divisionItem._id}`}
+                    className="bg-gradient-to-r from-emerald-50 to-white p-6 rounded-2xl border border-emerald-200 shadow-sm"
+                  >
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-lg font-semibold text-gray-900">{divisionItem._id} Income</h4>
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {divisionItem._id} Income
+                      </h4>
                       <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                         <span className="text-emerald-600 font-bold">
-                          {divisionItem._id === 'Office' ? 'O' : 'P'}
+                          {divisionItem._id === "Office" ? "O" : "P"}
                         </span>
                       </div>
                     </div>
-                    <p className="text-3xl font-bold text-emerald-700">₹{divisionItem.total.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-emerald-700">
+                      ₹{divisionItem.total.toLocaleString()}
+                    </p>
                     <p className="text-sm text-gray-500 mt-2">
-                      {dashboardIncome > 0 ? `${((divisionItem.total / dashboardIncome) * 100).toFixed(1)}% of total income` : 'No income data'}
+                      {dashboardIncome > 0
+                        ? `${((divisionItem.total / dashboardIncome) * 100).toFixed(1)}% of total income`
+                        : "No income data"}
                     </p>
                   </div>
                 ))}
-                
+
                 {divisionSummary.expense.map((divisionItem) => (
-                  <div key={`exp-${divisionItem._id}`} className="bg-gradient-to-r from-red-50 to-white p-6 rounded-2xl border border-red-200 shadow-sm">
+                  <div
+                    key={`exp-${divisionItem._id}`}
+                    className="bg-gradient-to-r from-red-50 to-white p-6 rounded-2xl border border-red-200 shadow-sm"
+                  >
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-lg font-semibold text-gray-900">{divisionItem._id} Expenses</h4>
+                      <h4 className="text-lg font-semibold text-gray-900">
+                        {divisionItem._id} Expenses
+                      </h4>
                       <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                         <span className="text-red-600 font-bold">
-                          {divisionItem._id === 'Office' ? 'O' : 'P'}
+                          {divisionItem._id === "Office" ? "O" : "P"}
                         </span>
                       </div>
                     </div>
-                    <p className="text-3xl font-bold text-red-700">₹{divisionItem.total.toLocaleString()}</p>
+                    <p className="text-3xl font-bold text-red-700">
+                      ₹{divisionItem.total.toLocaleString()}
+                    </p>
                     <p className="text-sm text-gray-500 mt-2">
-                      {dashboardExpense > 0 ? `${((divisionItem.total / dashboardExpense) * 100).toFixed(1)}% of total expenses` : 'No expense data'}
+                      {dashboardExpense > 0
+                        ? `${((divisionItem.total / dashboardExpense) * 100).toFixed(1)}% of total expenses`
+                        : "No expense data"}
                     </p>
                   </div>
                 ))}
@@ -963,7 +1061,7 @@ setTransactions(transactionsData);
                     </span>
                   )}
                 </button>
-                
+
                 <button
                   onClick={applyFilters}
                   className="flex items-center gap-2 px-4 py-2.5 bg-[#0B666A] text-white rounded-lg hover:bg-[#0B666A]/90 transition-colors"
@@ -971,7 +1069,7 @@ setTransactions(transactionsData);
                   <RefreshCw size={18} />
                   Apply
                 </button>
-                
+
                 <button
                   onClick={exportToCSV}
                   className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
@@ -986,7 +1084,9 @@ setTransactions(transactionsData);
             {showFilters && (
               <div className="mt-4 bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Filter Transactions</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Filter Transactions
+                  </h3>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={resetFilters}
@@ -1028,7 +1128,9 @@ setTransactions(transactionsData);
 
                   {/* Month and Year */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Month</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Month
+                    </label>
                     <select
                       value={selectedMonth}
                       onChange={(e) => setSelectedMonth(e.target.value)}
@@ -1043,7 +1145,9 @@ setTransactions(transactionsData);
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Year</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Year
+                    </label>
                     <select
                       value={selectedYear}
                       onChange={(e) => setSelectedYear(e.target.value)}
@@ -1059,7 +1163,9 @@ setTransactions(transactionsData);
 
                   {/* Division and Category */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Division</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Division
+                    </label>
                     <select
                       value={division}
                       onChange={(e) => setDivision(e.target.value)}
@@ -1075,7 +1181,9 @@ setTransactions(transactionsData);
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Category</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Category
+                    </label>
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
@@ -1084,35 +1192,59 @@ setTransactions(transactionsData);
                       <option value="all">All Categories</option>
                       <optgroup label="─── Income Categories ───">
                         <option value="Salary/Wages">💼 Salary/Wages</option>
-                        <option value="Freelance Work">💻 Freelance Work</option>
-                        <option value="Business Profits">📈 Business Profits</option>
+                        <option value="Freelance Work">
+                          💻 Freelance Work
+                        </option>
+                        <option value="Business Profits">
+                          📈 Business Profits
+                        </option>
                         <option value="Investments">📊 Investments</option>
                         <option value="Rental Income">🏠 Rental Income</option>
-                        <option value="Interest Earned">🏦 Interest Earned</option>
-                        <option value="Bonuses & Commissions">🎯 Bonuses & Commissions</option>
-                        <option value="Pension & Retirement Funds">👴 Pension & Retirement Funds</option>
-                        <option value="Government Benefits">🏛️ Government Benefits</option>
+                        <option value="Interest Earned">
+                          🏦 Interest Earned
+                        </option>
+                        <option value="Bonuses & Commissions">
+                          🎯 Bonuses & Commissions
+                        </option>
+                        <option value="Pension & Retirement Funds">
+                          👴 Pension & Retirement Funds
+                        </option>
+                        <option value="Government Benefits">
+                          🏛️ Government Benefits
+                        </option>
                         <option value="Side Hustles">💪 Side Hustles</option>
-                        <option value="Gifts & Donations Received">🎁 Gifts & Donations Received</option>
+                        <option value="Gifts & Donations Received">
+                          🎁 Gifts & Donations Received
+                        </option>
                         <option value="Tax Refunds">📄 Tax Refunds</option>
                         <option value="Royalties">📚 Royalties</option>
-                        <option value="Scholarships & Grants">🎓 Scholarships & Grants</option>
+                        <option value="Scholarships & Grants">
+                          🎓 Scholarships & Grants
+                        </option>
                         <option value="Other Income">💰 Other Income</option>
                       </optgroup>
-                      
+
                       <optgroup label="─── Expense Categories ───">
                         <option value="Food & Dining">🍕 Food & Dining</option>
-                        <option value="Transportation">🚗 Transportation</option>
+                        <option value="Transportation">
+                          🚗 Transportation
+                        </option>
                         <option value="Shopping">🛍️ Shopping</option>
                         <option value="Entertainment">🎬 Entertainment</option>
-                        <option value="Bills & Utilities">💡 Bills & Utilities</option>
-                        <option value="Health & Medical">🏥 Health & Medical</option>
+                        <option value="Bills & Utilities">
+                          💡 Bills & Utilities
+                        </option>
+                        <option value="Health & Medical">
+                          🏥 Health & Medical
+                        </option>
                         <option value="Education">📚 Education</option>
                         <option value="Rent/Mortgage">🏠 Rent/Mortgage</option>
                         <option value="Insurance">🛡️ Insurance</option>
                         <option value="Travel">✈️ Travel</option>
                         <option value="Personal Care">💇 Personal Care</option>
-                        <option value="Gifts & Donations">🎁 Gifts & Donations</option>
+                        <option value="Gifts & Donations">
+                          🎁 Gifts & Donations
+                        </option>
                         <option value="Subscriptions">📱 Subscriptions</option>
                         <option value="Fuel">⛽ Fuel</option>
                         <option value="Loan">💳 Loan</option>
@@ -1123,7 +1255,9 @@ setTransactions(transactionsData);
 
                   {/* Transaction Type */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Transaction Type</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Transaction Type
+                    </label>
                     <select
                       value={transactionType}
                       onChange={(e) => setTransactionType(e.target.value)}
@@ -1131,7 +1265,9 @@ setTransactions(transactionsData);
                     >
                       {transactionTypes.map((type) => (
                         <option key={type} value={type}>
-                          {type === "both" ? "All Transactions" : type.charAt(0).toUpperCase() + type.slice(1)}
+                          {type === "both"
+                            ? "All Transactions"
+                            : type.charAt(0).toUpperCase() + type.slice(1)}
                         </option>
                       ))}
                     </select>
@@ -1139,7 +1275,9 @@ setTransactions(transactionsData);
 
                   {/* Account and Payment Method */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Account</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Account
+                    </label>
                     <select
                       value={account}
                       onChange={(e) => setAccount(e.target.value)}
@@ -1154,7 +1292,9 @@ setTransactions(transactionsData);
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Payment Method</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Payment Method
+                    </label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
@@ -1168,15 +1308,15 @@ setTransactions(transactionsData);
                       ))}
                     </select>
                   </div>
-
-                  
                 </div>
 
                 {/* Active Filters Badges */}
                 {getActiveFilterCount() > 0 && (
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Active Filters:
+                      </span>
                       <button
                         onClick={resetFilters}
                         className="text-sm text-[#0B666A] hover:text-[#0B666A]/80"
@@ -1187,8 +1327,11 @@ setTransactions(transactionsData);
                     <div className="flex flex-wrap gap-2">
                       {selectedMonth !== "all" && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                          {months.find(m => m.value === selectedMonth)?.label}
-                          <button onClick={() => setSelectedMonth("all")} className="text-blue-600 hover:text-blue-800">
+                          {months.find((m) => m.value === selectedMonth)?.label}
+                          <button
+                            onClick={() => setSelectedMonth("all")}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
                             <X size={14} />
                           </button>
                         </span>
@@ -1196,7 +1339,10 @@ setTransactions(transactionsData);
                       {selectedYear !== "all" && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
                           {selectedYear}
-                          <button onClick={() => setSelectedYear("all")} className="text-blue-600 hover:text-blue-800">
+                          <button
+                            onClick={() => setSelectedYear("all")}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
                             <X size={14} />
                           </button>
                         </span>
@@ -1204,15 +1350,22 @@ setTransactions(transactionsData);
                       {division !== "all" && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
                           {division}
-                          <button onClick={() => setDivision("all")} className="text-purple-600 hover:text-purple-800">
+                          <button
+                            onClick={() => setDivision("all")}
+                            className="text-purple-600 hover:text-purple-800"
+                          >
                             <X size={14} />
                           </button>
                         </span>
                       )}
                       {transactionType !== "both" && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 text-sm rounded-full">
-                          {transactionType.charAt(0).toUpperCase() + transactionType.slice(1)}
-                          <button onClick={() => setTransactionType("both")} className="text-emerald-600 hover:text-emerald-800">
+                          {transactionType.charAt(0).toUpperCase() +
+                            transactionType.slice(1)}
+                          <button
+                            onClick={() => setTransactionType("both")}
+                            className="text-emerald-600 hover:text-emerald-800"
+                          >
                             <X size={14} />
                           </button>
                         </span>
@@ -1228,15 +1381,19 @@ setTransactions(transactionsData);
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-200">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 gap-4">
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Recent Transactions</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Recent Transactions
+                </h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Showing {transactions.length} of {totalTransactions} transactions
-                  {getActiveFilterCount() > 0 && ` • ${getActiveFilterCount()} active filter(s)`}
+                  Showing {transactions.length} of {totalTransactions}{" "}
+                  transactions
+                  {getActiveFilterCount() > 0 &&
+                    ` • ${getActiveFilterCount()} active filter(s)`}
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => window.location.href = '/transactions'}
+                  onClick={() => (window.location.href = "/transactions")}
                   className="flex items-center gap-2 px-4 py-2 text-sm text-[#0B666A] hover:text-[#0B666A]/80 hover:underline transition-colors"
                 >
                   View All
@@ -1244,11 +1401,14 @@ setTransactions(transactionsData);
                 </button>
               </div>
             </div>
-            
+
             {loading ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 border rounded-xl animate-pulse">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-4 border rounded-xl animate-pulse"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-gray-200"></div>
                       <div>
@@ -1294,28 +1454,43 @@ setTransactions(transactionsData);
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {transactions.map((transaction) => (
-                        <tr key={transaction._id} className="hover:bg-gray-50 transition-colors">
+                        <tr
+                          key={transaction._id}
+                          className="hover:bg-gray-50 transition-colors"
+                        >
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                            {new Date(transaction.date).toLocaleDateString('en-IN', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
+                            {new Date(transaction.date).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                transaction.type === "income" ? "bg-emerald-100" : "bg-red-100"
-                              }`}>
+                              <div
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                  transaction.type === "income"
+                                    ? "bg-emerald-100"
+                                    : "bg-red-100"
+                                }`}
+                              >
                                 {transaction.type === "income" ? (
-                                  <Plus size={16} className="text-emerald-600" />
+                                  <Plus
+                                    size={16}
+                                    className="text-emerald-600"
+                                  />
                                 ) : (
                                   <Minus size={16} className="text-red-600" />
                                 )}
                               </div>
                               <div>
                                 <p className="font-medium text-gray-900 text-sm">
-                                  {transaction.source || transaction.description || "Transaction"}
+                                  {transaction.source ||
+                                    transaction.description ||
+                                    "Transaction"}
                                 </p>
                                 <p className="text-xs text-gray-500 truncate max-w-xs">
                                   {transaction.notes || "No notes"}
@@ -1324,26 +1499,34 @@ setTransactions(transactionsData);
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                              transaction.type === "income" 
-                                ? "bg-emerald-100 text-emerald-800" 
-                                : "bg-red-100 text-red-800"
-                            }`}>
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
+                                transaction.type === "income"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
                               {transaction.type}
                             </span>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <span className="text-lg">{getCategoryIcon(transaction.category)}</span>
-                              <span className="text-sm text-gray-900">{transaction.category || "Other"}</span>
+                              <span className="text-lg">
+                                {getCategoryIcon(transaction.category)}
+                              </span>
+                              <span className="text-sm text-gray-900">
+                                {transaction.category || "Other"}
+                              </span>
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              transaction.division === "Office" 
-                                ? "bg-purple-100 text-purple-800" 
-                                : "bg-blue-100 text-blue-800"
-                            }`}>
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ${
+                                transaction.division === "Office"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
                               {transaction.division || "Personal"}
                             </span>
                           </td>
@@ -1352,19 +1535,31 @@ setTransactions(transactionsData);
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-900">
                             <div className="flex items-center gap-2">
-                              <span className="text-lg">{getPaymentMethodIcon(transaction.paymentMethod)}</span>
-                              <span>{transaction.paymentMethod || "Other"}</span>
+                              <span className="text-lg">
+                                {getPaymentMethodIcon(
+                                  transaction.paymentMethod,
+                                )}
+                              </span>
+                              <span>
+                                {transaction.paymentMethod || "Other"}
+                              </span>
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <p className={`font-bold text-lg ${
-                              transaction.type === "income" ? "text-emerald-700" : "text-red-700"
-                            }`}>
-                              {transaction.type === "income" ? "+" : "-"}₹{transaction.amount.toLocaleString()}
+                            <p
+                              className={`font-bold text-lg ${
+                                transaction.type === "income"
+                                  ? "text-emerald-700"
+                                  : "text-red-700"
+                              }`}
+                            >
+                              {transaction.type === "income" ? "+" : "-"}₹
+                              {transaction.amount.toLocaleString()}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {transaction.createdAt && canEditTransaction(transaction.createdAt) 
-                                ? "Editable" 
+                              {transaction.createdAt &&
+                              canEditTransaction(transaction.createdAt)
+                                ? "Editable"
                                 : "View only"}
                             </p>
                           </td>
@@ -1373,12 +1568,12 @@ setTransactions(transactionsData);
                     </tbody>
                   </table>
                 </div>
-                
+
                 {/* Pagination Component */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
                     <div className="text-sm text-gray-700">
-                      Page <span className="font-medium">{currentPage}</span> of{' '}
+                      Page <span className="font-medium">{currentPage}</span> of{" "}
                       <span className="font-medium">{totalPages}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1391,8 +1586,8 @@ setTransactions(transactionsData);
               <div className="text-center py-8">
                 <div className="text-gray-400 mb-2">No transactions found</div>
                 <p className="text-gray-500 text-sm">
-                  {getActiveFilterCount() > 0 
-                    ? "Try adjusting your filters" 
+                  {getActiveFilterCount() > 0
+                    ? "Try adjusting your filters"
                     : "Add your first transaction to get started"}
                 </p>
               </div>
