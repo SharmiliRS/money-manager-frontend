@@ -19,7 +19,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     if (!email || !password) {
       setError("Both fields are required!");
       setIsLoading(false);
@@ -34,11 +34,14 @@ const Login = () => {
     }
 
     try {
-      const res = await fetch("https://money-manager-backend-1-8wqn.onrender.com/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const res = await fetch(
+        "https://money-manager-backend-1-8wqn.onrender.com/api/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        },
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -47,7 +50,10 @@ const Login = () => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("userEmail", email);
-      console.log("✅ Stored Email in localStorage:", localStorage.getItem("userEmail")); 
+      console.log(
+        "✅ Stored Email in localStorage:",
+        localStorage.getItem("userEmail"),
+      );
 
       alert("Login successful!");
       setIsLoading(false);
@@ -72,7 +78,15 @@ const Login = () => {
         {/* Card */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-gray-200/50">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate("/")}
+              className="absolute left-0 top-0 flex items-center gap-2 text-lg text-[#0B666A] hover:text-[#095357] font-medium"
+            >
+              ← Back
+            </button>
+
             <div className="flex justify-center mb-4">
               <div className="relative">
                 <img
@@ -87,14 +101,18 @@ const Login = () => {
                 </div>
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-            <p className="text-gray-600">Sign in to continue your financial journey</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome Back
+            </h2>
+            <p className="text-gray-600">
+              Sign in to continue your financial journey
+            </p>
           </div>
 
           {/* Error Message */}
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-red-600 text-sm text-center">{error}</p>
+              <p className="text-red-600 text-sm text-center mb-0">{error}</p>
             </div>
           )}
 
@@ -152,9 +170,15 @@ const Login = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   {showPassword ? (
-                    <EyeOff size={20} className="text-gray-400 hover:text-gray-600" />
+                    <EyeOff
+                      size={20}
+                      className="text-gray-400 hover:text-gray-600"
+                    />
                   ) : (
-                    <Eye size={20} className="text-gray-400 hover:text-gray-600" />
+                    <Eye
+                      size={20}
+                      className="text-gray-400 hover:text-gray-600"
+                    />
                   )}
                 </button>
               </div>
@@ -213,11 +237,7 @@ const Login = () => {
               </a>
             </p>
           </div>
-
-          
         </div>
-
-        
       </div>
     </div>
   );

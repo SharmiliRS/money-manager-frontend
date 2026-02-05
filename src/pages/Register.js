@@ -90,7 +90,13 @@ const Register = () => {
         {/* Card */}
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-gray-200/50">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative">
+            <button
+              onClick={() => navigate("/login")}
+              className="absolute left-0 top-0 flex items-center gap-2 text-lg text-[#0B666A] hover:text-[#095357] font-medium"
+            >
+              ← Back
+            </button>
             <div className="flex justify-center mb-4">
               <div className="relative">
                 <img

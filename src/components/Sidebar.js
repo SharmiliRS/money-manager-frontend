@@ -73,7 +73,7 @@ const Sidebar = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("userEmail");
-    navigate("/login");
+    navigate("/");
   };
 
   // Check if menu item is active
