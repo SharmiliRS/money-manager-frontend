@@ -746,43 +746,7 @@ const Transactions = () => {
                       </div>
                     </div>
 
-                    {/* Category & Account */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                          Category
-                        </label>
-                        <select
-                          value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
-                        >
-                          <option value="all">All Categories</option>
-                          {categories.map((category) => (
-                            <option key={category.value} value={category.value}>
-                              {category.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                          Account
-                        </label>
-                        <select
-                          value={selectedAccount}
-                          onChange={(e) => setSelectedAccount(e.target.value)}
-                          className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-gray-50 border border-gray-300 rounded-xl"
-                        >
-                          <option value="all">All Accounts</option>
-                          {accounts.map((account) => (
-                            <option key={account.value} value={account.value}>
-                              {account.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                    
 
                     {/* Payment Method */}
                     <div>
