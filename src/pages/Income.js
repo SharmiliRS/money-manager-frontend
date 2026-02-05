@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import { useSidebar } from "../context/SidebarContext";
 import IncomeModal from "../components/IncomeModal";
-import ExpenseModal from "../components/ExpenseModal";
 import { Bar, Pie } from "react-chartjs-2";
 import "chart.js/auto";
 import { 
-  TrendingUp, TrendingDown, Calendar, Filter, Plus, Minus, 
+  TrendingUp, TrendingDown, Filter, Plus, 
   DollarSign, PieChart as PieChartIcon, Wallet, Building, 
-  Clock, CreditCard, RefreshCw, ChevronDown, ChevronUp,
-  Banknote, Users, Target, BarChart3, Shield, Briefcase,
-  Download, Edit, Trash2, Eye
+   CreditCard, RefreshCw, ChevronDown, ChevronUp,
+   BarChart3, Briefcase,
+  Download, Edit, Trash2
 } from "lucide-react";
 import axios from "axios";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
@@ -18,7 +17,6 @@ import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 const Income = () => {
   const { isSidebarOpen } = useSidebar();
   const [isIncomeModalOpen, setIncomeModalOpen] = useState(false);
-  const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
   const [incomeData, setIncomeData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -250,24 +248,7 @@ const handleConfirmDelete = async () => {
     setIncomeModalOpen(true);
   };
 
-  // Handle deleting income (within 12 hours)
-  const handleDeleteIncome = async (id) => {
-    try {
-      const response = await axios.delete(`${BASE_URL}/income/${id}`);
-      if (response.data.message) {
-        setSuccess("Income deleted successfully!");
-        await fetchIncomeData();
-        await fetchSummary();
-        setTimeout(() => setSuccess(""), 3000);
-      }
-    } catch (error) {
-      if (error.response?.status === 403) {
-        setError("Cannot delete income after 12 hours of creation.");
-      } else {
-        setError("Failed to delete income.");
-      }
-    }
-  };
+
 
   // Check if transaction can be edited (within 12 hours)
   const canEditTransaction = (createdAt) => {

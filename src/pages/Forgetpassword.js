@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Key, Lock, ArrowRight, Sparkles, Shield, ArrowLeft, RefreshCw, Check, X } from "lucide-react";
+import { Mail, Key, Lock, ArrowRight, Shield, ArrowLeft, RefreshCw, Check, X } from "lucide-react";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();

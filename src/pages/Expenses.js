@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import { useSidebar } from "../context/SidebarContext";
-import IncomeModal from "../components/IncomeModal";
 import ExpenseModal from "../components/ExpenseModal";
-import { Bar, Pie, Line } from "react-chartjs-2";
+import { Bar, Pie} from "react-chartjs-2";
 import "chart.js/auto";
 import { 
-  TrendingUp, TrendingDown, Calendar, Filter, Plus, Minus, 
+  TrendingUp, TrendingDown, Filter, Minus, 
   DollarSign, PieChart as PieChartIcon, Wallet, Building, 
-  Clock, CreditCard, RefreshCw, ChevronDown, ChevronUp,
-  Banknote, Users, Target, BarChart3, Shield, Briefcase,
+   CreditCard, RefreshCw, ChevronDown, ChevronUp, BarChart3, 
   Download, Edit, Trash2, AlertTriangle, Tag, FileText
 } from "lucide-react";
 import axios from "axios";
@@ -17,7 +15,6 @@ import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 
 const Expenses = () => {
   const { isSidebarOpen } = useSidebar();
-  const [isIncomeModalOpen, setIncomeModalOpen] = useState(false);
   const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseData, setExpenseData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -256,24 +253,7 @@ const handleConfirmDelete = async () => {
     setExpenseModalOpen(true);
   };
 
-  // Handle deleting expense (within 12 hours)
-  const handleDeleteExpense = async (id) => {
-    try {
-      const response = await axios.delete(`${BASE_URL}/expense/${id}`);
-      if (response.data.message) {
-        setSuccess("Expense deleted successfully!");
-        await fetchExpenseData();
-        await fetchSummary();
-        setTimeout(() => setSuccess(""), 3000);
-      }
-    } catch (error) {
-      if (error.response?.status === 403) {
-        setError("Cannot delete expense after 12 hours of creation.");
-      } else {
-        setError("Failed to delete expense.");
-      }
-    }
-  };
+  
 
   // Check if transaction can be edited (within 12 hours)
   const canEditTransaction = (createdAt) => {

@@ -10,7 +10,6 @@ import {
   Shield,
   Smartphone,
   Target,
-  PieChart,
   Zap
 } from "lucide-react";
 
