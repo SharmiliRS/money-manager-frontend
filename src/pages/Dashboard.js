@@ -610,16 +610,7 @@ setTransactions(transactionsData);
             <div className="flex items-center justify-between">
               {/* Left side with hamburger and title */}
               <div className="flex items-center gap-3">
-                {/* Mobile Hamburger Button */}
-                {isMobile && (
-                  <button
-                    onClick={toggleSidebar}
-                    className="lg:hidden w-10 h-10 bg-gradient-to-r from-[#0B666A] to-emerald-600 rounded-xl shadow-sm flex items-center justify-center text-white hover:shadow-md transition-all duration-300 hover:scale-105 active:scale-95 mr-2"
-                    aria-label="Toggle menu"
-                  >
-                    <Menu size={20} />
-                  </button>
-                )}
+                
                 
                 <div>
                   <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-1">
