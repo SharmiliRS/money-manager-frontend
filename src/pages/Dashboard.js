@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback  } from "react";
 import axios from "axios";
 import { 
-  Plus, Minus, TrendingUp, TrendingDown, Calendar, 
-  Filter, Edit, RefreshCw, BarChart3, PieChart as PieChartIcon,
-  ChevronDown, ChevronUp, Loader2, Search, Download,
+  Plus, Minus, TrendingUp, TrendingDown, 
+  Filter, RefreshCw, Loader2, Download,
   X, Eye
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import IncomeModal from "../components/IncomeModal";
 import ExpenseModal from "../components/ExpenseModal";
-import { Bar, Pie, Line } from "react-chartjs-2";
+import {  Line } from "react-chartjs-2";
 import "chart.js/auto";
 import { Menu } from "lucide-react";
 import { useSidebar } from "../context/SidebarContext";
@@ -92,63 +91,57 @@ const Dashboard = () => {
   const divisions = ["Personal", "Office"];
   const paymentMethods = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque", "Other"];
   const transactionTypes = ["both", "income", "expense"];
-  const sortOptions = [
-    { value: "date", label: "Date" },
-    { value: "amount", label: "Amount" },
-    { value: "category", label: "Category" },
-  ];
-  const sortOrders = [
-    { value: "desc", label: "Newest/Desc" },
-    { value: "asc", label: "Oldest/Asc" },
-  ];
+  
 
   const BASE_URL = "http://localhost:5000/api";
 
-  // Fetch all necessary data
-  useEffect(() => {
-    fetchDashboardData();
-    fetchRecentTransactions();
-  }, [timeRange, currentPage]);
+ 
 
   // Fetch dashboard summary data
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const userEmail = localStorage.getItem("userEmail");
-      if (!userEmail) {
-        console.error("No user email found");
-        return;
-      }
+ const fetchDashboardData = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      // Fetch dashboard summary
-      const dashboardResponse = await axios.get(`${BASE_URL}/dashboard/${userEmail}?period=${timeRange}`);
-      const dashboard = dashboardResponse.data;
-      
-      setDashboardIncome(dashboard.summary.totalIncome || 0);
-      setDashboardExpense(dashboard.summary.totalExpense || 0);
-      setDashboardBalance(dashboard.summary.balance || 0);
-      setCategorySummary({
-        income: dashboard.categories.income || [],
-        expense: dashboard.categories.expense || []
-      });
-      setDivisionSummary({
-        income: dashboard.divisions.income || [],
-        expense: dashboard.divisions.expense || []
-      });
-      
-      // Fetch period data for charts
-      const periodResponse = await axios.get(`${BASE_URL}/dashboard/period/${userEmail}?period=${timeRange}`);
-      setPeriodData(periodResponse.data.data || []);
-
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error.message);
-    } finally {
-      setLoading(false);
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+      console.error("No user email found");
+      return;
     }
-  };
+
+    const dashboardResponse = await axios.get(
+      `${BASE_URL}/dashboard/${userEmail}?period=${timeRange}`
+    );
+    const dashboard = dashboardResponse.data;
+
+    setDashboardIncome(dashboard.summary.totalIncome || 0);
+    setDashboardExpense(dashboard.summary.totalExpense || 0);
+    setDashboardBalance(dashboard.summary.balance || 0);
+
+    setCategorySummary({
+      income: dashboard.categories.income || [],
+      expense: dashboard.categories.expense || []
+    });
+
+    setDivisionSummary({
+      income: dashboard.divisions.income || [],
+      expense: dashboard.divisions.expense || []
+    });
+
+    const periodResponse = await axios.get(
+      `${BASE_URL}/dashboard/period/${userEmail}?period=${timeRange}`
+    );
+    setPeriodData(periodResponse.data.data || []);
+
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error.message);
+  } finally {
+    setLoading(false);
+  }
+}, [timeRange]);
+
 
   // Fetch recent transactions - show newest first
-  const fetchRecentTransactions = async () => {
+  const fetchRecentTransactions = useCallback(async () => {
   try {
     const userEmail = localStorage.getItem("userEmail");
     if (!userEmail) return;
@@ -195,8 +188,12 @@ setTransactions(transactionsData);
   } catch (error) {
     console.error("Error fetching recent transactions:", error.message);
   }
-};
-
+}, [currentPage, transactionsPerPage]);
+ // Fetch all necessary data
+  useEffect(() => {
+    fetchDashboardData();
+    fetchRecentTransactions();
+  }, [fetchDashboardData, fetchRecentTransactions]);
   // Apply filters to get filtered transactions
 const applyFilters = async (page = 1) => {
   try {

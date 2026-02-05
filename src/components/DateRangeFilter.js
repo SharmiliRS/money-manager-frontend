@@ -1,6 +1,6 @@
 // components/DateRangeFilter.jsx
 import React, { useState } from 'react';
-import { Calendar, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 
 const DateRangeFilter = ({ onFilter }) => {
   const [startDate, setStartDate] = useState('');

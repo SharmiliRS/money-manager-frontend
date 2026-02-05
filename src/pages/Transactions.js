@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { useSidebar } from "../context/SidebarContext";
 import IncomeModal from "../components/IncomeModal";
 import ExpenseModal from "../components/ExpenseModal";
 import { 
-  Plus, Minus, ChevronLeft, ChevronRight, Filter, Calendar, 
-  RefreshCw, Download, Building, User, Wallet, CreditCard,
-  Edit, Trash2, AlertCircle, Search, X, Eye, Menu
+  Plus, Minus, ChevronLeft, ChevronRight, Filter,  
+  RefreshCw, Download, Building, User, Wallet, 
+  Edit, Trash2, AlertCircle, Search, X, Menu
 } from "lucide-react";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 
@@ -97,18 +97,10 @@ const Transactions = () => {
     { value: "Other", label: "Other", icon: "🔹" }
   ];
 
-  useEffect(() => {
-    if (!userEmail) {
-      setError("User not found. Please log in.");
-      setLoading(false);
-      return;
-    }
-    fetchTransactions();
-    fetchCategories();
-    fetchAccounts();
-  }, [userEmail]);
+  
 
- const fetchTransactions = async () => {
+
+ const fetchTransactions = useCallback(async () => {
   try {
     setLoading(true);
     setError("");
@@ -232,10 +224,20 @@ const sortedTransactions = transactionsData.sort((a, b) => {
   } finally {
     setLoading(false);
   }
-};
+}, [ userEmail,
+  dateRange.startDate,
+  dateRange.endDate,
+  searchTerm,
+  selectedAccount,
+  selectedCategory,
+  selectedDivision,
+  selectedMonth,
+  selectedPaymentMethod,
+  selectedType,
+  selectedYear]);
 
   // Fetch categories from backend
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axios.get(`${BASE_URL}/categories/${userEmail}?type=Both`);
       if (response.data && response.data.length > 0) {
@@ -247,10 +249,10 @@ const sortedTransactions = transactionsData.sort((a, b) => {
     } catch (error) {
       console.log("Could not fetch categories:", error.message);
     }
-  };
+  }, [userEmail]);
 
   // Fetch accounts from backend
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       const response = await axios.get(`${BASE_URL}/accounts/${userEmail}`);
       if (response.data && response.data.length > 0) {
@@ -262,7 +264,7 @@ const sortedTransactions = transactionsData.sort((a, b) => {
     } catch (error) {
       console.log("Could not fetch accounts:", error.message);
     }
-  };
+  }, [userEmail]);
 
   // Handle search
   useEffect(() => {
@@ -386,7 +388,17 @@ const sortedTransactions = transactionsData.sort((a, b) => {
     setDateRange({ startDate: "", endDate: "" });
     setSearchTerm("");
   };
+useEffect(() => {
+  if (!userEmail) {
+    setError("User not found. Please log in.");
+    setLoading(false);
+    return;
+  }
 
+  fetchTransactions();
+  fetchCategories();
+  fetchAccounts();
+}, [userEmail, fetchTransactions, fetchCategories, fetchAccounts]);
   // Export data to CSV
   const exportToCSV = () => {
     const headers = ["Type", "Date", "Time", "Source", "Category", "Division", "Account", "Payment Method", "Amount", "Notes"];

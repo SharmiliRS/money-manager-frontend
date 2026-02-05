@@ -1,8 +1,29 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect,useCallback } from "react";
 import { Modal, Button, Form, InputGroup } from "react-bootstrap";
 import axios from "axios";
 import { DollarSign, Calendar, FileText, CreditCard, Wallet, TrendingUp, Building, User, Tag, Clock, Edit, AlertCircle } from "lucide-react";
+ // Predefined categories if API fails
+  const defaultIncomeCategories = [
+    "Salary/Wages",
+    "Freelance Work",
+    "Business Profits",
+    "Investments",
+    "Rental Income",
+    "Interest Earned",
+    "Bonuses & Commissions",
+    "Pension & Retirement Funds",
+    "Government Benefits",
+    "Side Hustles",
+    "Gifts & Donations Received",
+    "Tax Refunds",
+    "Royalties",
+    "Scholarships & Grants",
+    "Other"
+  ];
 
+  const defaultAccounts = ["Cash", "Primary Account", "Savings Account", "Investment Account"];
+  const divisions = ["Personal", "Office"];
+  const paymentMethods = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque", "Other"];
 const IncomeModal = ({ isOpen, onClose, onAddIncome, editingIncome }) => {
   const [incomeData, setIncomeData] = useState({
     email: localStorage.getItem("userEmail") || "",
@@ -25,28 +46,7 @@ const IncomeModal = ({ isOpen, onClose, onAddIncome, editingIncome }) => {
   const [categories, setCategories] = useState([]);
   const [accounts, setAccounts] = useState([]);
 
-  // Predefined categories if API fails
-  const defaultIncomeCategories = [
-    "Salary/Wages",
-    "Freelance Work",
-    "Business Profits",
-    "Investments",
-    "Rental Income",
-    "Interest Earned",
-    "Bonuses & Commissions",
-    "Pension & Retirement Funds",
-    "Government Benefits",
-    "Side Hustles",
-    "Gifts & Donations Received",
-    "Tax Refunds",
-    "Royalties",
-    "Scholarships & Grants",
-    "Other"
-  ];
-
-  const defaultAccounts = ["Cash", "Primary Account", "Savings Account", "Investment Account"];
-  const divisions = ["Personal", "Office"];
-  const paymentMethods = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque", "Other"];
+ 
 
   const BASE_URL = "http://localhost:5000/api";
 
@@ -83,16 +83,10 @@ const IncomeModal = ({ isOpen, onClose, onAddIncome, editingIncome }) => {
     }
   }, [editingIncome]);
 
-  useEffect(() => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (userEmail) {
-      fetchCategories(userEmail);
-      fetchAccounts(userEmail);
-    }
-  }, []);
+ 
 
   // Fetch categories from backend
-  const fetchCategories = async (email) => {
+  const fetchCategories = useCallback(async (email) => {
     try {
       const response = await axios.get(`${BASE_URL}/categories/${email}?type=Income`);
       if (response.data && response.data.length > 0) {
@@ -104,10 +98,10 @@ const IncomeModal = ({ isOpen, onClose, onAddIncome, editingIncome }) => {
       console.log("Using default income categories:", error.message);
       setCategories(defaultIncomeCategories);
     }
-  };
+  },[]);
 
   // Fetch accounts from backend
-  const fetchAccounts = async (email) => {
+  const fetchAccounts =useCallback( async (email) => {
     try {
       const response = await axios.get(`${BASE_URL}/accounts/${email}`);
       if (response.data && response.data.length > 0) {
@@ -119,7 +113,14 @@ const IncomeModal = ({ isOpen, onClose, onAddIncome, editingIncome }) => {
       console.log("Using default accounts:", error.message);
       setAccounts(defaultAccounts);
     }
-  };
+  },[]);
+useEffect(() => {
+  const userEmail = localStorage.getItem("userEmail");
+  if (userEmail) {
+    fetchCategories(userEmail);
+    fetchAccounts(userEmail);
+  }
+}, [fetchCategories, fetchAccounts]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

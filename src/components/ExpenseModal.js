@@ -1,31 +1,8 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Modal, Button, Form, InputGroup } from "react-bootstrap";
 import axios from "axios";
 import { Minus, Calendar, FileText, CreditCard, Tag, TrendingDown, AlertCircle, Building, User, Wallet, Edit } from "lucide-react";
-
-const ExpenseModal = ({ isOpen, onClose, onAddExpense, editingExpense }) => {
-  const [expenseData, setExpenseData] = useState({
-    email: localStorage.getItem("userEmail") || "",
-    source: "",
-    amount: "",
-    paymentMethod: "",
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-    notes: "",
-    division: "Personal",
-    category: "",
-    account: "Cash"
-  });
-
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Fetch categories and accounts from API
-  const [categories, setCategories] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-
-  // Predefined categories if API fails
+ // Predefined categories if API fails
   const defaultExpenseCategories = [
     "Food & Dining",
     "Transportation",
@@ -48,65 +25,104 @@ const ExpenseModal = ({ isOpen, onClose, onAddExpense, editingExpense }) => {
   const defaultAccounts = ["Cash", "Primary Account", "Savings Account"];
   const divisions = ["Personal", "Office"];
   const paymentMethods = ["Cash", "Bank Transfer", "Credit Card", "UPI", "Cheque", "Other"];
+const ExpenseModal = ({ isOpen, onClose, onAddExpense, editingExpense }) => {
+  const [expenseData, setExpenseData] = useState({
+    email: localStorage.getItem("userEmail") || "",
+    source: "",
+    amount: "",
+    paymentMethod: "",
+    date: new Date().toISOString().split('T')[0],
+    time: new Date().toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+    notes: "",
+    division: "Personal",
+    category: "",
+    account: "Cash"
+  });
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // Fetch categories and accounts from API
+  const [categories, setCategories] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+
+ 
 
   const BASE_URL = "http://localhost:5000/api";
 
-  // Reset form when editingExpense changes
-  useEffect(() => {
-    const userEmail = localStorage.getItem("userEmail");
-    if (userEmail) {
-      setExpenseData((prev) => ({ ...prev, email: userEmail }));
-      fetchCategories(userEmail);
-      fetchAccounts(userEmail);
-    }
 
-    // Pre-fill form if editing
-    if (editingExpense) {
-      console.log("Editing expense:", editingExpense);
-      setExpenseData({
-        email: editingExpense.email || userEmail || "",
-        source: editingExpense.source || "",
-        amount: editingExpense.amount || "",
-        paymentMethod: editingExpense.paymentMethod || "",
-        date: editingExpense.date || new Date().toISOString().split('T')[0],
-        time: editingExpense.time || new Date().toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        notes: editingExpense.notes || "",
-        division: editingExpense.division || "Personal",
-        category: editingExpense.category || "",
-        account: editingExpense.account || "Cash"
-      });
-    }
-  }, [editingExpense]);
 
   // Fetch categories from backend
-  const fetchCategories = async (email) => {
-    try {
-      const response = await axios.get(`${BASE_URL}/categories/${email}?type=Expense`);
-      if (response.data && response.data.length > 0) {
-        setCategories(response.data.map(cat => cat.name));
-      } else {
-        setCategories(defaultExpenseCategories);
-      }
-    } catch (error) {
-      console.log("Using default categories:", error.message);
+const fetchCategories = useCallback(async (email) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/categories/${email}?type=Expense`
+    );
+
+    if (response.data && response.data.length > 0) {
+      setCategories(response.data.map(cat => cat.name));
+    } else {
       setCategories(defaultExpenseCategories);
     }
-  };
+  } catch (error) {
+    console.log("Using default categories:", error.message);
+    setCategories(defaultExpenseCategories);
+  }
+}, []);
+
+
 
   // Fetch accounts from backend
-  const fetchAccounts = async (email) => {
-    try {
-      const response = await axios.get(`${BASE_URL}/accounts/${email}`);
-      if (response.data && response.data.length > 0) {
-        setAccounts(response.data.map(acc => acc.accountName));
-      } else {
-        setAccounts(defaultAccounts);
-      }
-    } catch (error) {
-      console.log("Using default accounts:", error.message);
+const fetchAccounts = useCallback(async (email) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/accounts/${email}`);
+    if (response.data && response.data.length > 0) {
+      setAccounts(response.data.map(acc => acc.accountName));
+    } else {
       setAccounts(defaultAccounts);
     }
-  };
+  } catch (error) {
+    console.log("Using default accounts:", error.message);
+    setAccounts(defaultAccounts);
+  }
+}, []);
+
+  // Reset form when editingExpense changes
+useEffect(() => {
+  const userEmail = localStorage.getItem("userEmail");
+
+  if (userEmail) {
+    setExpenseData(prev => ({ ...prev, email: userEmail }));
+    fetchCategories(userEmail);
+    fetchAccounts(userEmail);
+  }
+
+  // Pre-fill form if editing
+  if (editingExpense) {
+    setExpenseData({
+      email: editingExpense.email || userEmail || "",
+      source: editingExpense.source || "",
+      amount: editingExpense.amount || "",
+      paymentMethod: editingExpense.paymentMethod || "",
+      date:
+        editingExpense.date ||
+        new Date().toISOString().split("T")[0],
+      time:
+        editingExpense.time ||
+        new Date().toLocaleTimeString("en-IN", {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit"
+        }),
+      notes: editingExpense.notes || "",
+      division: editingExpense.division || "Personal",
+      category: editingExpense.category || "",
+      account: editingExpense.account || "Cash"
+    });
+  }
+}, [editingExpense, fetchCategories, fetchAccounts]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
