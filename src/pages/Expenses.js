@@ -524,7 +524,7 @@ const Expenses = () => {
         >
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 lg:mb-2  ml-5 text-center lg:text-left">
+            <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 lg:mb-2 mb-0 ml-5 text-center lg:text-left">
               Expense Dashboard
             </h1>
             <p className="text-gray-600 hidden lg:block text-center lg:text-left">
@@ -709,7 +709,7 @@ const Expenses = () => {
                 className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors gap-3"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-start gap-3 w-full sm:w-auto">
                   <Filter size={18} className="text-[#E63946]" />
                   <div>
                     <h3 className="text-base font-semibold text-gray-900">

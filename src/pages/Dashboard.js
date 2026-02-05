@@ -649,7 +649,7 @@ const Dashboard = () => {
             <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
               Dashboard
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 mt-1 lg:block hidden">
               Welcome back! Here's your financial overview
             </p>
           </div>

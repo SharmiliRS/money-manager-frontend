@@ -503,7 +503,7 @@ const Income = () => {
         >
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 lg:mb-2 ml-5 text-center lg:text-left">
+            <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 lg:mb-2 mb-0 ml-5 text-center lg:text-left">
               Income Dashboard
             </h1>
             <p className="text-gray-600 hidden lg:block text-center lg:text-left">
